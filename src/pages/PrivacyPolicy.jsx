@@ -9,7 +9,7 @@ const PrivacyPolicy = () => (
         <h1 style={{ color: 'var(--tmh-ocean)', fontSize: 32, fontWeight: 700, marginBottom: 24 }}>Privacy Policy</h1>
         <div style={{ fontSize: 17, color: 'var(--tmh-ink)', marginBottom: 18, lineHeight: 1.7 }}>
           <strong>Effective Date:</strong> 01 February 2026<br />
-          <strong>Platform:</strong> TechMNHub (<a href="https://www.techmnhub.com" target="_blank" rel="noopener noreferrer">www.techmnhub.com</a>)<br /><br />
+          <strong>Platform:</strong> TechMNHub (<a href="https://techmnhub.com" target="_blank" rel="noopener noreferrer">techmnhub.com</a>)<br /><br />
           TechMNHub is a skill development and opportunity platform designed to connect students, institutions, vendors, and professionals.<br />
           We are committed to protecting user privacy and personal data.
           <br /><br />

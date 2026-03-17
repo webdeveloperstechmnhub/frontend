@@ -26,6 +26,7 @@ const App = () => {
           <Route path='/techstars' element={<TechStars />} />
           <Route path='/techfront' element={<TechFront />} />
           <Route path='/registration-form' element={<RegistrationForm />} />
+          <Route path='/registration-form/:eventId' element={<RegistrationForm />} />
           <Route path='/zonex-registration' element={<ZonexRegistration />} />
            <Route path='/privacy-policy' element={<PrivacyPolicy />} />
           <Route path='/terms-of-use' element={<TermsOfUse />} />

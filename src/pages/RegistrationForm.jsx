@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams } from "react-router-dom";
 
-const categories = {
+const DEFAULT_CATEGORY_OPTIONS = {
   Participation: [
     "Dancing",
     "Singing",
     "Ramp Walk/Modeling",
     "Poetry",
     "Hackathon",
-    "Debate Competition",
     "Quiz Competition",
-    "Presentation",
     "Speech",
     "Painting/Drawing and Sketching"
   ],
@@ -22,7 +21,170 @@ import {
 
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
-const ZonexRegistration = () => {
+const DEFAULT_TICKET_TYPES = [
+  {
+    key: "pro-participation",
+    name: "Pro Participation",
+    price: 150,
+    total: 0,
+    sold: 0,
+    remaining: null,
+    soldOut: false,
+    appliesTo: "Participation",
+    description: "Entry to 2-3 skill zones with event access.",
+  },
+  {
+    key: "visitor-pass",
+    name: "Visitor Pass",
+    price: 150,
+    total: 0,
+    sold: 0,
+    remaining: null,
+    soldOut: false,
+    appliesTo: "Visitor",
+    description: "Venue access for visitors.",
+  },
+];
+
+const DEFAULT_ZONEX_EVENT_META = {
+  shortName: "Zonex 2026",
+  date: "7 March 2026",
+  city: "Muzaffarnagar",
+  time: "9:00 AM - 5:00 PM",
+  tagline: "Where Talent Takes Shape",
+  categories: DEFAULT_CATEGORY_OPTIONS.Participation,
+  contactEmail: "techmnhub.team@gmail.com",
+  entryFee: {
+    pro: "Rs 150",
+    visitor: "Rs 150",
+  },
+  status: "active",
+  ticketTypes: DEFAULT_TICKET_TYPES,
+};
+
+const DEFAULT_GENERIC_EVENT_META = {
+  shortName: "Event Registration",
+  date: "Date to be announced",
+  city: "TBA",
+  time: "Time to be announced",
+  tagline: "Complete your details to confirm your spot.",
+  categories: [],
+  contactEmail: "techmnhub.team@gmail.com",
+  entryFee: {
+    pro: "Rs 150",
+    visitor: "Rs 150",
+  },
+  status: "active",
+  ticketTypes: DEFAULT_TICKET_TYPES,
+};
+
+const extractAmount = (value, fallback = 150) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const match = value.match(/\d+/);
+    if (match) {
+      return Number(match[0]);
+    }
+  }
+
+  return fallback;
+};
+
+const buildCategoryOptions = (eventCategories) => {
+  if (!Array.isArray(eventCategories) || eventCategories.length === 0) {
+    return DEFAULT_CATEGORY_OPTIONS;
+  }
+
+  const cleaned = eventCategories
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+
+  if (cleaned.length === 0) {
+    return DEFAULT_CATEGORY_OPTIONS;
+  }
+
+  const hasVisitor = cleaned.some((item) => item.toLowerCase().includes("visitor"));
+  const participation = cleaned.filter((item) => !item.toLowerCase().includes("visitor"));
+
+  const options = {
+    Participation:
+      participation.length > 0
+        ? participation
+        : DEFAULT_CATEGORY_OPTIONS.Participation,
+  };
+
+  if (hasVisitor) {
+    options.Visitor = ["General Access"];
+  }
+
+  return options;
+};
+
+const normalizeTicketTypes = (ticketTypes, entryFee) => {
+  const source = Array.isArray(ticketTypes) && ticketTypes.length > 0
+    ? ticketTypes
+    : DEFAULT_TICKET_TYPES.map((ticketType) => ({
+        ...ticketType,
+        price: ticketType.key === "visitor-pass"
+          ? extractAmount(entryFee?.visitor, ticketType.price)
+          : extractAmount(entryFee?.pro, ticketType.price),
+      }));
+
+  return source.map((ticketType, index) => {
+    const total = Number(ticketType.total || 0);
+    const sold = Number(ticketType.sold || 0);
+    const remaining =
+      ticketType.remaining !== undefined && ticketType.remaining !== null
+        ? Number(ticketType.remaining)
+        : total > 0
+          ? Math.max(total - sold, 0)
+          : null;
+
+    return {
+      key: String(ticketType.key || `ticket-${index + 1}`),
+      name: ticketType.name || `Ticket ${index + 1}`,
+      price: extractAmount(ticketType.price, 0),
+      total,
+      sold,
+      remaining,
+      soldOut: Boolean(ticketType.soldOut) || (total > 0 && sold >= total),
+      appliesTo: ["Participation", "Visitor", "All"].includes(ticketType.appliesTo)
+        ? ticketType.appliesTo
+        : "All",
+      description: ticketType.description || "",
+    };
+  });
+};
+
+const INITIAL_FORM_DATA = {
+  fullName: "",
+  mobile: "",
+  email: "",
+  college: "",
+  courseYear: "",
+  city: "",
+  category: "",
+  subCategory: [],
+  portfolio: "",
+  github: "",
+  instagram: "",
+  passType: "pro-participation",
+  passName: "Pro Participation",
+  amountPaid: 150,
+  referralCode: "",
+  registrationId: "",
+  qrCode: "",
+  paymentStatus: "pending",
+};
+
+const RegistrationForm = () => {
+  const { eventId } = useParams();
+  const storagePrefix = eventId ? `event_${eventId}` : "zonex";
+  const storageKey = (name) => `${storagePrefix}_${name}`;
+
   // Restore from localStorage if available
   const getInitialState = (key, fallback) => {
     try {
@@ -32,75 +194,192 @@ const ZonexRegistration = () => {
     return fallback;
   };
 
-  const [step, setStep] = useState(() => getInitialState('zonex_step', 1));
+  const [eventMeta, setEventMeta] = useState(
+    eventId ? DEFAULT_GENERIC_EVENT_META : DEFAULT_ZONEX_EVENT_META,
+  );
+  const [eventMetaLoading, setEventMetaLoading] = useState(Boolean(eventId));
+  const [eventMetaError, setEventMetaError] = useState("");
+
+  const [step, setStep] = useState(() => getInitialState(storageKey("step"), 1));
   const [loading, setLoading] = useState(false);
-  const [hackathonTeamSize, setHackathonTeamSize] = useState(() => getInitialState('zonex_hackathonTeamSize', 3));
-  const [formData, setFormData] = useState(() => getInitialState('zonex_formData', {
-    // Step 1 - Basic Details
-    fullName: "",
-    mobile: "",
-    email: "",
-    college: "",
-    courseYear: "",
-    city: "",
-    // Step 2 & 3 - Category & Subcategory
-    category: "",
-    subCategory: [],
-    // Social Links
-    portfolio: "",
-    github: "",
-    instagram: "",
-    // Payment & Registration
-    passType: "150",
-    passName: "Pro Participation",
-    amountPaid: 150,
-    referralCode: "",
-    registrationId: "",
-    qrCode: "",
-    paymentStatus: "pending",
-  }));
-  const [teamMembers, setTeamMembers] = useState(() => getInitialState('zonex_teamMembers', ["", "", ""])); // Minimum 3
+  const [hackathonTeamSize, setHackathonTeamSize] = useState(() => getInitialState(storageKey("hackathonTeamSize"), 3));
+  const [formData, setFormData] = useState(() => getInitialState(storageKey("formData"), INITIAL_FORM_DATA));
+  const [teamMembers, setTeamMembers] = useState(() => getInitialState(storageKey("teamMembers"), ["", "", ""])); // Minimum 3
   const [teamError, setTeamError] = useState("");
 
-  // ===== NEW EFFECT: Recalculate amount when pass type, hackathon, or team size changes =====
   useEffect(() => {
-    // If no pass type selected, do nothing
+    const loadEventMeta = async () => {
+      if (!eventId) {
+        setEventMeta(DEFAULT_ZONEX_EVENT_META);
+        setEventMetaLoading(false);
+        setEventMetaError("");
+        return;
+      }
+
+      try {
+        setEventMetaLoading(true);
+        setEventMetaError("");
+
+        const res = await fetch(`${backendURL}/events/${eventId}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          const normalizedTicketTypes = normalizeTicketTypes(
+            data.ticketTypes || data.ticketAvailability,
+            data.entryFee,
+          );
+
+          setEventMeta({
+            shortName: data.shortName || data.name || DEFAULT_GENERIC_EVENT_META.shortName,
+            date: data.date || DEFAULT_GENERIC_EVENT_META.date,
+            city: data.city || DEFAULT_GENERIC_EVENT_META.city,
+            time: data.time || DEFAULT_GENERIC_EVENT_META.time,
+            tagline: data.description || DEFAULT_GENERIC_EVENT_META.tagline,
+            categories: Array.isArray(data.categories) ? data.categories : [],
+            contactEmail: data.contact?.email || DEFAULT_GENERIC_EVENT_META.contactEmail,
+            entryFee: {
+              pro: data.entryFee?.pro || DEFAULT_GENERIC_EVENT_META.entryFee.pro,
+              visitor: data.entryFee?.visitor || DEFAULT_GENERIC_EVENT_META.entryFee.visitor,
+            },
+            status: data.status === "closed" ? "closed" : "active",
+            ticketTypes: normalizedTicketTypes,
+          });
+        } else {
+          setEventMeta(DEFAULT_GENERIC_EVENT_META);
+          setEventMetaError(data.msg || "Could not load event details for this link.");
+        }
+      } catch (error) {
+        console.error("Failed to load event details:", error);
+        setEventMeta(DEFAULT_GENERIC_EVENT_META);
+        setEventMetaError("Could not load event details for this link.");
+      } finally {
+        setEventMetaLoading(false);
+      }
+    };
+
+    loadEventMeta();
+  }, [eventId]);
+
+  useEffect(() => {
+    setStep(getInitialState(storageKey("step"), 1));
+    setHackathonTeamSize(getInitialState(storageKey("hackathonTeamSize"), 3));
+    setFormData(getInitialState(storageKey("formData"), INITIAL_FORM_DATA));
+    setTeamMembers(getInitialState(storageKey("teamMembers"), ["", "", ""]));
+    setTeamError("");
+  }, [storagePrefix]);
+
+  const categoryOptions = useMemo(
+    () => buildCategoryOptions(eventMeta.categories),
+    [eventMeta.categories],
+  );
+
+  const visitorPassEnabled = Boolean(categoryOptions.Visitor);
+  const isEventClosed = eventMeta.status === "closed";
+
+  const availableTicketTypes = useMemo(() => {
+    return (eventMeta.ticketTypes || []).filter((ticketType) => {
+      if (!formData.category) return true;
+      if (ticketType.appliesTo === "All") return true;
+      return ticketType.appliesTo === formData.category;
+    });
+  }, [eventMeta.ticketTypes, formData.category]);
+
+  const selectedTicketType = useMemo(
+    () => availableTicketTypes.find((ticketType) => ticketType.key === formData.passType) || availableTicketTypes[0] || null,
+    [availableTicketTypes, formData.passType],
+  );
+
+  const selectedPassSoldOut = Boolean(selectedTicketType?.soldOut);
+
+  const hasHackathonOption = useMemo(
+    () =>
+      (categoryOptions.Participation || []).some(
+        (item) => item.toLowerCase() === "hackathon",
+      ),
+    [categoryOptions],
+  );
+
+  // Recalculate amount when pass type, selected activity, event fee, or team size changes.
+  useEffect(() => {
     if (!formData.passType) return;
 
-    const hasHackathon = formData.subCategory.includes("Hackathon");
-    let newAmount = formData.amountPaid; // fallback
+    const hasHackathon = hasHackathonOption && formData.subCategory.includes("Hackathon");
+    let newAmount = formData.amountPaid;
 
-    if (formData.passType === "visitor") {
-      newAmount = 150;
-    } else if (formData.passType === "150") {
-      newAmount = hasHackathon ? 150 * hackathonTeamSize : 150;
+    if (selectedTicketType) {
+      newAmount = hasHackathon && formData.category !== "Visitor"
+        ? selectedTicketType.price * hackathonTeamSize
+        : selectedTicketType.price;
     } else {
-      return; // unknown pass type – do nothing
+      return;
     }
 
-    // Only update if amount actually changed to avoid infinite loops
     if (newAmount !== formData.amountPaid) {
-      setFormData(prev => ({ ...prev, amountPaid: newAmount }));
+      setFormData((prev) => ({ ...prev, amountPaid: newAmount }));
     }
-  }, [formData.passType, formData.subCategory, hackathonTeamSize]); // Dependencies
+  }, [
+    formData.passType,
+    formData.subCategory,
+    formData.amountPaid,
+    hackathonTeamSize,
+    hasHackathonOption,
+    selectedTicketType,
+    formData.category,
+  ]);
+
+  useEffect(() => {
+    if (formData.category === "Visitor" && !visitorPassEnabled) {
+      setFormData((prev) => ({ ...prev, category: "", subCategory: [] }));
+    }
+  }, [formData.category, visitorPassEnabled]);
+
+  useEffect(() => {
+    if (!selectedTicketType && availableTicketTypes.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        passType: availableTicketTypes[0].key,
+        passName: availableTicketTypes[0].name,
+      }));
+      return;
+    }
+
+    if (selectedTicketType?.soldOut) {
+      const fallbackType = availableTicketTypes.find((ticketType) => !ticketType.soldOut);
+      if (fallbackType) {
+        setFormData((prev) => ({
+          ...prev,
+          passType: fallbackType.key,
+          passName: fallbackType.name,
+        }));
+      }
+    }
+  }, [selectedTicketType, availableTicketTypes]);
 
   const handleInput = (e) => {
-    // If changing category, reset subCategory appropriately
     if (e.target.name === "category") {
-      if (e.target.value === "Participation") {
+      const selectedCategory = e.target.value;
+
+      if (selectedCategory === "Participation") {
+        const allowed = categoryOptions.Participation || [];
         setFormData({
           ...formData,
-          category: e.target.value,
-          subCategory: formData.subCategory.filter((item) => item !== "General Access"),
+          category: selectedCategory,
+          subCategory: formData.subCategory
+            .filter((item) => item !== "General Access")
+            .filter((item) => allowed.includes(item)),
         });
-      } else if (e.target.value === "Visitor") {
+      } else if (selectedCategory === "Visitor") {
+        if (!visitorPassEnabled) {
+          alert("Visitor pass is not enabled for this event.");
+          return;
+        }
         setFormData({
           ...formData,
-          category: e.target.value,
-          subCategory: formData.subCategory.includes("General Access") ? ["General Access"] : [],
+          category: selectedCategory,
+          subCategory: ["General Access"],
         });
       } else {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData({ ...formData, category: selectedCategory, subCategory: [] });
       }
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -111,7 +390,10 @@ const ZonexRegistration = () => {
     const value = e.target.value;
     let updated = [...formData.subCategory];
     if (formData.category === "Participation") {
-      // Remove General Access if present
+      const allowed = categoryOptions.Participation || [];
+      if (!allowed.includes(value)) {
+        return;
+      }
       updated = updated.filter((item) => item !== "General Access");
       if (e.target.checked) {
         if (updated.length < 3) {
@@ -131,19 +413,6 @@ const ZonexRegistration = () => {
     setFormData({ ...formData, subCategory: updated });
   };
 
-  // Auto-update amountPaid when Hackathon/team size/pass changes
-  useEffect(() => {
-    let amt = formData.amountPaid;
-    if (formData.passType === "150") {
-      amt = formData.subCategory.includes("Hackathon") ? 150 * hackathonTeamSize : 150;
-    } else if (formData.passType === "visitor") {
-      amt = 150;
-    }
-    if (formData.amountPaid !== amt) {
-      setFormData((prev) => ({ ...prev, amountPaid: amt }));
-    }
-  }, [formData.subCategory, hackathonTeamSize, formData.passType, formData.category]);
-
   const handleTeamMemberChange = (idx, value) => {
     const updated = [...teamMembers];
     updated[idx] = value;
@@ -153,33 +422,43 @@ const ZonexRegistration = () => {
   const nextStep = () => {
     const newStep = step + 1;
     setStep(newStep);
-    localStorage.setItem('zonex_step', JSON.stringify(newStep));
+    localStorage.setItem(storageKey("step"), JSON.stringify(newStep));
   };
   
   const prevStep = () => {
     const newStep = step - 1;
     setStep(newStep);
-    localStorage.setItem('zonex_step', JSON.stringify(newStep));
+    localStorage.setItem(storageKey("step"), JSON.stringify(newStep));
   };
 
   // Save form progress to localStorage on change
   useEffect(() => {
-    localStorage.setItem('zonex_formData', JSON.stringify(formData));
+    localStorage.setItem(storageKey("formData"), JSON.stringify(formData));
   }, [formData]);
   
   useEffect(() => {
-    localStorage.setItem('zonex_teamMembers', JSON.stringify(teamMembers));
+    localStorage.setItem(storageKey("teamMembers"), JSON.stringify(teamMembers));
   }, [teamMembers]);
   
   useEffect(() => {
-    localStorage.setItem('zonex_hackathonTeamSize', JSON.stringify(hackathonTeamSize));
+    localStorage.setItem(storageKey("hackathonTeamSize"), JSON.stringify(hackathonTeamSize));
   }, [hackathonTeamSize]);
   
   useEffect(() => {
-    localStorage.setItem('zonex_step', JSON.stringify(step));
+    localStorage.setItem(storageKey("step"), JSON.stringify(step));
   }, [step]);
 
   const handlePayment = async () => {
+    if (isEventClosed) {
+      alert("Registration for this event is closed.");
+      return;
+    }
+
+    if (selectedPassSoldOut) {
+      alert("Selected ticket type is sold out. Please choose another pass.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -194,6 +473,8 @@ const ZonexRegistration = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          eventId: eventId || null,
+          eventShortName: eventMeta.shortName,
           fullName: formData.fullName,
           mobile: formData.mobile,
           email: formData.email,
@@ -207,7 +488,8 @@ const ZonexRegistration = () => {
           instagram: formData.instagram,
           teamMembers: teamMembersList,
           referralCode: formData.referralCode,
-          passName: formData.passName,
+          passName: selectedTicketType?.name || formData.passName,
+          passType: selectedTicketType?.key || formData.passType,
           amountPaid: formData.amountPaid,
         }),
       });
@@ -240,7 +522,7 @@ const ZonexRegistration = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Zonex 2026",
+        name: eventMeta.shortName,
         description: `${formData.passName} - ${formData.category}`,
         image: "https://techmnhub.com/logo.png", // Add your logo URL
         order_id: orderData.id,
@@ -267,10 +549,10 @@ const ZonexRegistration = () => {
               }));
               
               // Clear localStorage after successful registration
-              localStorage.removeItem('zonex_formData');
-              localStorage.removeItem('zonex_teamMembers');
-              localStorage.removeItem('zonex_hackathonTeamSize');
-              localStorage.removeItem('zonex_step');
+              localStorage.removeItem(storageKey("formData"));
+              localStorage.removeItem(storageKey("teamMembers"));
+              localStorage.removeItem(storageKey("hackathonTeamSize"));
+              localStorage.removeItem(storageKey("step"));
               
               setStep(4); // ✅ CORRECTED: Changed from 5 to 4
               
@@ -331,11 +613,16 @@ const ZonexRegistration = () => {
 
   // Download ticket function
   const downloadTicket = () => {
+    const safeEventName = (eventMeta.shortName || "event")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
     const ticketHTML = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Zonex 2026 - Ticket</title>
+        <title>${eventMeta.shortName} - Ticket</title>
         <style>
           body { font-family: Arial, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding: 20px; }
           .ticket { max-width: 500px; background: #1e293b; border-radius: 20px; padding: 30px; border: 2px solid #06b6d4; }
@@ -355,8 +642,8 @@ const ZonexRegistration = () => {
       <body>
         <div class="ticket">
           <div class="header">
-            <h1 class="title">ZONEX 2026</h1>
-            <p class="subtitle">Where Talent Takes Shape</p>
+            <h1 class="title">${eventMeta.shortName}</h1>
+            <p class="subtitle">${eventMeta.tagline}</p>
           </div>
           
           <div class="qr-code">
@@ -395,7 +682,7 @@ const ZonexRegistration = () => {
           </div>
           
           <div class="footer">
-            <p>📅 7 March 2026 | 📍 MUZAFFARNAGAR</p>
+            <p>📅 ${eventMeta.date} | 📍 ${String(eventMeta.city || "TBA").toUpperCase()}</p>
             <p>Show this QR code at the venue for entry</p>
             <p>© 2026 TechMNHub. All rights reserved.</p>
           </div>
@@ -408,12 +695,23 @@ const ZonexRegistration = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Zonex2026_${formData.registrationId}.html`;
+    a.download = `${safeEventName || "event"}_${formData.registrationId}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  if (eventMetaLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-6">
+        <div className="text-center">
+          <p className="text-2xl font-bold">Loading Event Details...</p>
+          <p className="text-slate-400 mt-2">Please wait while we prepare your registration page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-cyan-500">
@@ -426,25 +724,24 @@ const ZonexRegistration = () => {
           <span className="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase">
             TechMNHub Presents
           </span>
-          <h1 className="text-6xl md:text-8xl font-black mt-4 mb-2 tracking-tighter italic">
-            ZONEX{" "}
+          <h1 className="text-5xl md:text-7xl font-black mt-4 mb-2 tracking-tighter italic">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-lime-400">
-              2026
+              {eventMeta.shortName}
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto">
-            Where Talent Takes Shape
+            {eventMeta.tagline}
           </p>
 
           <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm font-medium border-t border-white/10 pt-6">
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-cyan-400">📅</span> 7 March 2026
+              <span className="text-cyan-400">📅</span> {eventMeta.date}
             </span>
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-cyan-400">📍</span> MUZAFFARNAGAR
+              <span className="text-cyan-400">📍</span> {String(eventMeta.city || "TBA").toUpperCase()}
             </span>
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-cyan-400">⏰</span> 9:00 AM - 5:00 PM
+              <span className="text-cyan-400">⏰</span> {eventMeta.time}
             </span>
           </div>
         </div>
@@ -452,6 +749,17 @@ const ZonexRegistration = () => {
 
       {/* MAIN REGISTRATION FLOW */}
       <section className="max-w-4xl mx-auto px-6 pb-20">
+        {eventMetaError && (
+          <div className="mb-6 bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-xl p-4 text-sm">
+            {eventMetaError}
+          </div>
+        )}
+        {isEventClosed && (
+          <div className="mb-6 bg-red-500/10 border border-red-400/30 text-red-200 rounded-xl p-4 text-sm">
+            Registration for this event is closed. You can still view event information on this page.
+          </div>
+        )}
+
         <div className="bg-slate-900/50 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
           {/* Progress Bar */}
           <div className="flex justify-between mb-12 relative">
@@ -541,7 +849,7 @@ const ZonexRegistration = () => {
                   className="bg-slate-800 border border-white/10 p-4 rounded-xl appearance-none"
                 >
                   <option value="">Select Main Category *</option>
-                  {Object.keys(categories).map((cat) => (
+                  {Object.keys(categoryOptions).map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -554,7 +862,7 @@ const ZonexRegistration = () => {
                       Select up to 3 Activities
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {categories[formData.category].map((sub) => (
+                      {(categoryOptions[formData.category] || []).map((sub) => (
                         <label key={sub} className={`flex items-center gap-2 bg-slate-800 border border-white/10 p-3 rounded-xl cursor-pointer ${formData.subCategory.length >= 3 && !formData.subCategory.includes(sub) ? 'opacity-50' : ''}`}>
                           <input
                             type="checkbox"
@@ -599,7 +907,7 @@ const ZonexRegistration = () => {
                 )}
               </div>
 
-              {formData.category === "Participation" && formData.subCategory.includes("Hackathon") && (
+              {formData.category === "Participation" && hasHackathonOption && formData.subCategory.includes("Hackathon") && (
                 <div className="mt-6 bg-slate-800/60 p-4 rounded-xl border border-cyan-500">
                   <h4 className="font-bold text-cyan-400 mb-2">Hackathon Team Details</h4>
                   <label className="block mb-2 text-xs text-slate-300">Select number of team members (3-6, including yourself):</label>
@@ -679,7 +987,7 @@ const ZonexRegistration = () => {
                       alert("Please select Visitor Access");
                       return;
                     }
-                    if (formData.subCategory.includes("Hackathon")) {
+                    if (hasHackathonOption && formData.subCategory.includes("Hackathon")) {
                       const validNames = teamMembers.filter(n => n.trim() !== "");
                       if (validNames.length !== hackathonTeamSize) {
                         setTeamError(`Please enter all ${hackathonTeamSize} team member names.`);
@@ -705,72 +1013,54 @@ const ZonexRegistration = () => {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Pro Participation */}
-                <div
-                  onClick={() => {
-                    setFormData({
-                      ...formData,
-                      passType: "150",
-                      passName: "Pro Participation",
-                      // amountPaid removed
-                    });
-                  }}
-                  className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between 
-                    ${formData.passType === "150" ? "border-lime-500 bg-lime-500/10" : "border-white/10 bg-white/5"}`}
-                >
-                  <div>
-                    <span className="text-[10px] bg-lime-500 text-black px-2 py-0.5 rounded-full font-bold">
-                      BEST SELLER
-                    </span>
-                    <h3 className="text-lg font-bold mt-1">
-                      Pro Participation
-                    </h3>
-                    <p className="text-2xl font-black text-lime-400 mt-1">
-                      ₹{formData.subCategory.includes("Hackathon") ? 150 * hackathonTeamSize : 150}
-                    </p>
-                    <ul className="text-xs text-slate-300 mt-3 space-y-1 font-medium">
-                      <li>• Entry to 2-3 Skill Zone</li>
-                      <li>• Hard Copy Certificate</li>
-                      <li>• Physical Event ID Card</li>
-                      <li>• Access to Food Carnival</li>
-                    </ul>
+                {availableTicketTypes.length === 0 ? (
+                  <div className="col-span-full bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-slate-300">
+                    No ticket types are available for the selected category.
                   </div>
-                </div>
+                ) : (
+                  availableTicketTypes.map((ticketType, index) => {
+                    const isSelected = selectedTicketType?.key === ticketType.key;
+                    const displayedPrice =
+                      formData.category !== "Visitor" && formData.subCategory.includes("Hackathon")
+                        ? ticketType.price * hackathonTeamSize
+                        : ticketType.price;
 
-                {/* Visitor Pass */}
-                <div
-                  onClick={() => {
-                    // Prevent selecting Visitor pass if Participation is selected
-                    if (formData.category === "Participation") {
-                      alert("You cannot select Visitor Pass when Participation is selected.");
-                      return;
-                    }
-                    setFormData({
-                      ...formData,
-                      passType: "visitor",
-                      passName: "Visitor Pass",
-                      amountPaid: 150,
-                    });
-                  }}
-                  className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between 
-                    ${
-                      formData.passType === "visitor"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5"
-                    }`}
-                >
-                  <div>
-                    <h3 className="text-lg font-bold">Visitor Pass</h3>
-                    <p className="text-2xl font-black text-purple-400 mt-1">
-                      ₹150
-                    </p>
-                    <ul className="text-xs text-slate-400 mt-3 space-y-1">
-                      <li>• Full Venue Access</li>
-                      <li>• Watch All Performances</li>
-                      <li>• Food Carnival Access</li>
-                    </ul>
-                  </div>
-                </div>
+                    return (
+                      <div
+                        key={ticketType.key}
+                        onClick={() => {
+                          if (ticketType.soldOut) {
+                            alert(`${ticketType.name} is sold out for this event.`);
+                            return;
+                          }
+                          setFormData({
+                            ...formData,
+                            passType: ticketType.key,
+                            passName: ticketType.name,
+                            amountPaid: displayedPrice,
+                          });
+                        }}
+                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${isSelected ? "border-lime-500 bg-lime-500/10" : "border-white/10 bg-white/5"} ${ticketType.soldOut ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <div>
+                          <span className="text-[10px] bg-lime-500 text-black px-2 py-0.5 rounded-full font-bold">
+                            {ticketType.soldOut ? "SOLD OUT" : index === 0 ? "BEST SELLER" : ticketType.appliesTo}
+                          </span>
+                          <h3 className="text-lg font-bold mt-1">{ticketType.name}</h3>
+                          <p className="text-2xl font-black text-lime-400 mt-1">₹{displayedPrice}</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {ticketType.remaining === null
+                              ? "Unlimited tickets"
+                              : `${ticketType.remaining} tickets left`}
+                          </p>
+                          {ticketType.description && (
+                            <p className="text-xs text-slate-300 mt-3 leading-5">{ticketType.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Referral Code (Optional) */}
@@ -808,12 +1098,16 @@ const ZonexRegistration = () => {
 
                 <button
                   onClick={handlePayment}
-                  disabled={loading}
+                  disabled={loading || isEventClosed || selectedPassSoldOut}
                   className="w-full bg-white text-black py-4 rounded-xl font-black text-xl hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading
                     ? "Processing..."
-                    : `PAY ₹${formData.amountPaid} & REGISTER`}
+                    : isEventClosed
+                      ? "REGISTRATION CLOSED"
+                      : selectedPassSoldOut
+                        ? "SELECT AN AVAILABLE TICKET"
+                      : `PAY ₹${formData.amountPaid} & REGISTER`}
                 </button>
 
                 <div className="flex justify-center gap-4 mt-4">
@@ -882,34 +1176,15 @@ const ZonexRegistration = () => {
                   onClick={() => {
                     // Reset form for new registration
                     setStep(1);
-                    setFormData({
-                      fullName: "",
-                      mobile: "",
-                      email: "",
-                      college: "",
-                      courseYear: "",
-                      city: "",
-                      category: "",
-                      subCategory: [],
-                      portfolio: "",
-                      github: "",
-                      instagram: "",
-                      passType: "150",
-                      passName: "Pro Participation",
-                      amountPaid: 150,
-                      referralCode: "",
-                      registrationId: "",
-                      qrCode: "",
-                      paymentStatus: "pending",
-                    });
+                    setFormData(INITIAL_FORM_DATA);
                     setTeamMembers(["", "", ""]);
                     setHackathonTeamSize(3);
                     
                     // Clear localStorage
-                    localStorage.removeItem('zonex_formData');
-                    localStorage.removeItem('zonex_teamMembers');
-                    localStorage.removeItem('zonex_hackathonTeamSize');
-                    localStorage.setItem('zonex_step', JSON.stringify(1));
+                    localStorage.removeItem(storageKey("formData"));
+                    localStorage.removeItem(storageKey("teamMembers"));
+                    localStorage.removeItem(storageKey("hackathonTeamSize"));
+                    localStorage.setItem(storageKey("step"), JSON.stringify(1));
                   }}
                   className="px-6 py-3 bg-cyan-600 rounded-xl font-bold hover:bg-cyan-500 transition"
                 >
@@ -919,7 +1194,7 @@ const ZonexRegistration = () => {
 
               <div className="text-sm text-slate-400 mt-4">
                 <p>📱 Show this QR code at the venue for entry</p>
-                <p className="mt-2">For any issues, contact: techmnhub.team@gmail.com</p>
+                <p className="mt-2">For any issues, contact: {eventMeta.contactEmail || "techmnhub.team@gmail.com"}</p>
               </div>
             </div>
           )}
@@ -929,4 +1204,4 @@ const ZonexRegistration = () => {
   );
 }
 
-export default ZonexRegistration;
+export default RegistrationForm;
