@@ -779,8 +779,25 @@
 }
 
 @media (max-width: 920px) {
+  .employee-page {
+    padding: var(--space-3);
+  }
+
   .employee-page .employee-id-shell {
     width: min(680px, 100%);
+    padding-top: 120px;
+  }
+
+  .employee-page .logo-badge {
+    top: 56px;
+    width: 92px;
+    height: 92px;
+    padding: 10px;
+  }
+
+  .employee-page .logo-mark {
+    width: 78%;
+    height: 78%;
   }
 
   .employee-page .card {
@@ -792,10 +809,25 @@
   .employee-page .left-zone {
     border-right: none;
     border-bottom: 1px solid rgba(255, 215, 0, 0.16);
+    padding: var(--space-3) var(--space-3) var(--space-4);
   }
 
   .employee-page .right-zone {
     padding: var(--space-3);
+  }
+
+  .employee-page .identity-stack {
+    gap: var(--space-2);
+  }
+
+  .employee-page .avatar {
+    width: 132px;
+    height: 132px;
+    font-size: 46px;
+  }
+
+  .employee-page .employee-name {
+    font-size: 1.26rem;
   }
 
   .employee-page .data-panel {
