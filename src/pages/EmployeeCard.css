@@ -826,6 +826,8 @@
   .employee-page .employee-id-shell {
     width: min(680px, 100%);
     padding-top: 120px;
+    transform: none !important;
+    transition: none !important;
   }
 
   .employee-page .logo-badge {
@@ -833,6 +835,7 @@
     width: 92px;
     height: 92px;
     padding: 10px;
+    transform: translate(-50%, -50%);
   }
 
   .employee-page .logo-mark {
@@ -844,6 +847,8 @@
     height: auto;
     min-height: 500px;
     grid-template-columns: 1fr;
+    transform: none !important;
+    transition: none !important;
   }
 
   .employee-page .left-zone {
@@ -872,11 +877,6 @@
 
   .employee-page .data-panel {
     padding: var(--space-3);
-  }
-
-  .employee-page .motion-helper {
-    margin-top: var(--space-2);
-    padding-inline: var(--space-2);
   }
 
   .employee-page .row {

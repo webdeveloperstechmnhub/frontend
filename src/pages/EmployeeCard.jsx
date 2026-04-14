@@ -47,8 +47,6 @@ const safeText = (value, fallback = 'N/A') => {
   return v || fallback
 }
 
-const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
-
 const setTiltStyles = (shell, tiltX, tiltY) => {
   const tiltMagnitude = Math.min(1, (Math.abs(tiltX) + Math.abs(tiltY)) / 13)
   const badgeDepth = 82 - tiltMagnitude * 52
@@ -148,19 +146,7 @@ const EmployeeCard = () => {
         return undefined
       }
 
-      const orientationApi = window.DeviceOrientationEvent
-      if (!orientationApi) {
-        setMotionMode('unsupported')
-        return undefined
-      }
-
-      const permissionRequester = orientationApi.requestPermission
-      if (typeof permissionRequester === 'function') {
-        setMotionMode('prompt')
-        return undefined
-      }
-
-      setMotionMode('idle')
+      setMotionMode('mobile')
     } catch {
       setMotionMode('desktop')
     }
@@ -238,102 +224,6 @@ const EmployeeCard = () => {
       }
     }
   }, [motionMode])
-
-  useEffect(() => {
-    const shell = shellRef.current
-
-    if (!shell || motionMode !== 'enabled' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return undefined
-    }
-
-    let targetX = 0
-    let targetY = 0
-    let currentX = 0
-    let currentY = 0
-    let rafId = null
-
-    const maxTiltX = 7
-    const maxTiltY = 8
-    const lerp = 0.1
-
-    const animate = () => {
-      currentX += (targetX - currentX) * lerp
-      currentY += (targetY - currentY) * lerp
-
-      setTiltStyles(shell, currentX, currentY)
-
-      const shouldContinue =
-        Math.abs(targetX - currentX) > 0.01 ||
-        Math.abs(targetY - currentY) > 0.01
-
-      if (shouldContinue) {
-        rafId = window.requestAnimationFrame(animate)
-      } else {
-        rafId = null
-      }
-    }
-
-    const requestAnimate = () => {
-      if (!rafId) {
-        rafId = window.requestAnimationFrame(animate)
-      }
-    }
-
-    const handleOrientation = (event) => {
-      const beta = typeof event.beta === 'number' ? event.beta : 0
-      const gamma = typeof event.gamma === 'number' ? event.gamma : 0
-
-      const pitch = clamp(beta, -45, 45)
-      const roll = clamp(gamma, -30, 30)
-
-      targetX = clamp((-pitch / 45) * maxTiltX, -maxTiltX, maxTiltX)
-      targetY = clamp((roll / 30) * maxTiltY, -maxTiltY, maxTiltY)
-      requestAnimate()
-    }
-
-    const handleOrientationChange = () => {
-      targetX = 0
-      targetY = 0
-      requestAnimate()
-    }
-
-    window.addEventListener('deviceorientation', handleOrientation, true)
-    window.addEventListener('orientationchange', handleOrientationChange)
-
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation, true)
-      window.removeEventListener('orientationchange', handleOrientationChange)
-
-      if (rafId) {
-        window.cancelAnimationFrame(rafId)
-      }
-    }
-  }, [motionMode])
-
-  const enablePhoneMotion = async () => {
-    if (typeof window === 'undefined') return
-
-    const orientationApi = window.DeviceOrientationEvent
-
-    if (!orientationApi) {
-      setMotionMode('unsupported')
-      return
-    }
-
-    const permissionRequester = orientationApi.requestPermission
-
-    if (typeof permissionRequester === 'function') {
-      try {
-        const permission = await permissionRequester.call(orientationApi)
-        setMotionMode(permission === 'granted' ? 'enabled' : 'denied')
-      } catch {
-        setMotionMode('denied')
-      }
-      return
-    }
-
-    setMotionMode('enabled')
-  }
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -434,32 +324,6 @@ const EmployeeCard = () => {
           </section>
         </section>
 
-        {(motionMode === 'prompt' || motionMode === 'idle') && (
-          <div className="motion-helper" aria-live="polite">
-            <p className="motion-helper-text">Enable phone motion to tilt the card with your gyro.</p>
-            <button type="button" className="motion-enable-btn" onClick={enablePhoneMotion}>
-              Enable phone motion
-            </button>
-          </div>
-        )}
-
-        {motionMode === 'enabled' && (
-          <p className="motion-helper motion-helper-active" aria-live="polite">
-            Gyro motion is active. Move your phone to tilt the card.
-          </p>
-        )}
-
-        {motionMode === 'unsupported' && (
-          <p className="motion-helper motion-helper-disabled" aria-live="polite">
-            Your device does not expose gyro controls in this browser.
-          </p>
-        )}
-
-        {motionMode === 'denied' && (
-          <p className="motion-helper motion-helper-disabled" aria-live="polite">
-            Motion permission was denied. The card will stay static on this phone.
-          </p>
-        )}
       </div>
     </main>
   )
