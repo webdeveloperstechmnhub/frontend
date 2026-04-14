@@ -132,32 +132,39 @@ const EmployeeCard = () => {
       return undefined
     }
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const isTouchDevice =
-      window.matchMedia('(pointer: coarse)').matches ||
-      window.matchMedia('(max-width: 920px)').matches
+    try {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const isTouchDevice =
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(max-width: 920px)').matches
 
-    if (prefersReducedMotion) {
-      setMotionMode('reduced')
-      return undefined
-    }
+      if (prefersReducedMotion) {
+        setMotionMode('reduced')
+        return undefined
+      }
 
-    if (!isTouchDevice) {
+      if (!isTouchDevice) {
+        setMotionMode('desktop')
+        return undefined
+      }
+
+      const orientationApi = window.DeviceOrientationEvent
+      if (!orientationApi) {
+        setMotionMode('unsupported')
+        return undefined
+      }
+
+      const permissionRequester = orientationApi.requestPermission
+      if (typeof permissionRequester === 'function') {
+        setMotionMode('prompt')
+        return undefined
+      }
+
+      setMotionMode('idle')
+    } catch {
       setMotionMode('desktop')
-      return undefined
     }
 
-    if (typeof window.DeviceOrientationEvent === 'undefined') {
-      setMotionMode('unsupported')
-      return undefined
-    }
-
-    if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
-      setMotionMode('prompt')
-      return undefined
-    }
-
-    setMotionMode('enabled')
     return undefined
   }, [])
 
@@ -230,7 +237,7 @@ const EmployeeCard = () => {
         window.cancelAnimationFrame(rafId)
       }
     }
-  }, [])
+  }, [motionMode])
 
   useEffect(() => {
     const shell = shellRef.current
@@ -306,14 +313,18 @@ const EmployeeCard = () => {
   const enablePhoneMotion = async () => {
     if (typeof window === 'undefined') return
 
-    if (typeof window.DeviceOrientationEvent === 'undefined') {
+    const orientationApi = window.DeviceOrientationEvent
+
+    if (!orientationApi) {
       setMotionMode('unsupported')
       return
     }
 
-    if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+    const permissionRequester = orientationApi.requestPermission
+
+    if (typeof permissionRequester === 'function') {
       try {
-        const permission = await window.DeviceOrientationEvent.requestPermission()
+        const permission = await permissionRequester.call(orientationApi)
         setMotionMode(permission === 'granted' ? 'enabled' : 'denied')
       } catch {
         setMotionMode('denied')
@@ -423,7 +434,7 @@ const EmployeeCard = () => {
           </section>
         </section>
 
-        {motionMode === 'prompt' && (
+        {(motionMode === 'prompt' || motionMode === 'idle') && (
           <div className="motion-helper" aria-live="polite">
             <p className="motion-helper-text">Enable phone motion to tilt the card with your gyro.</p>
             <button type="button" className="motion-enable-btn" onClick={enablePhoneMotion}>
@@ -441,6 +452,12 @@ const EmployeeCard = () => {
         {motionMode === 'unsupported' && (
           <p className="motion-helper motion-helper-disabled" aria-live="polite">
             Your device does not expose gyro controls in this browser.
+          </p>
+        )}
+
+        {motionMode === 'denied' && (
+          <p className="motion-helper motion-helper-disabled" aria-live="polite">
+            Motion permission was denied. The card will stay static on this phone.
           </p>
         )}
       </div>
