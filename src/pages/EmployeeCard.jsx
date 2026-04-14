@@ -47,6 +47,23 @@ const safeText = (value, fallback = 'N/A') => {
   return v || fallback
 }
 
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+const setTiltStyles = (shell, tiltX, tiltY) => {
+  const tiltMagnitude = Math.min(1, (Math.abs(tiltX) + Math.abs(tiltY)) / 13)
+  const badgeDepth = 82 - tiltMagnitude * 52
+  const badgeGlow = 0.52 - tiltMagnitude * 0.14
+  const cardGlow = 0.18 + tiltMagnitude * 0.16
+  const cardGlowHover = Math.min(0.52, cardGlow + 0.12)
+
+  shell.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`)
+  shell.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`)
+  shell.style.setProperty('--badge-z', `${badgeDepth.toFixed(2)}px`)
+  shell.style.setProperty('--badge-glow', `${badgeGlow.toFixed(3)}`)
+  shell.style.setProperty('--card-glow', `${cardGlow.toFixed(3)}`)
+  shell.style.setProperty('--card-glow-hover', `${cardGlowHover.toFixed(3)}`)
+}
+
 const resolvePhotoUrl = (value) => {
   const raw = String(value || '').trim()
   if (!raw) return ''
@@ -86,6 +103,7 @@ const EmployeeCard = () => {
   const [error, setError] = useState('')
   const [employee, setEmployee] = useState(null)
   const [avatarLoadError, setAvatarLoadError] = useState(false)
+  const [motionMode, setMotionMode] = useState('desktop')
 
   const empId = useMemo(() => {
     return (
@@ -110,9 +128,43 @@ const EmployeeCard = () => {
   }, [showcaseData.photoUrl])
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const isTouchDevice =
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(max-width: 920px)').matches
+
+    if (prefersReducedMotion) {
+      setMotionMode('reduced')
+      return undefined
+    }
+
+    if (!isTouchDevice) {
+      setMotionMode('desktop')
+      return undefined
+    }
+
+    if (typeof window.DeviceOrientationEvent === 'undefined') {
+      setMotionMode('unsupported')
+      return undefined
+    }
+
+    if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+      setMotionMode('prompt')
+      return undefined
+    }
+
+    setMotionMode('enabled')
+    return undefined
+  }, [])
+
+  useEffect(() => {
     const shell = shellRef.current
 
-    if (!shell || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!shell || motionMode !== 'desktop' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return undefined
     }
 
@@ -130,18 +182,7 @@ const EmployeeCard = () => {
       currentX += (targetX - currentX) * lerp
       currentY += (targetY - currentY) * lerp
 
-      const tiltMagnitude = Math.min(1, (Math.abs(currentX) + Math.abs(currentY)) / (maxTiltX + maxTiltY))
-      const badgeDepth = 82 - tiltMagnitude * 52
-      const badgeGlow = 0.52 - tiltMagnitude * 0.14
-      const cardGlow = 0.18 + tiltMagnitude * 0.16
-      const cardGlowHover = Math.min(0.52, cardGlow + 0.12)
-
-      shell.style.setProperty('--tilt-x', `${currentX.toFixed(2)}deg`)
-      shell.style.setProperty('--tilt-y', `${currentY.toFixed(2)}deg`)
-      shell.style.setProperty('--badge-z', `${badgeDepth.toFixed(2)}px`)
-      shell.style.setProperty('--badge-glow', `${badgeGlow.toFixed(3)}`)
-      shell.style.setProperty('--card-glow', `${cardGlow.toFixed(3)}`)
-      shell.style.setProperty('--card-glow-hover', `${cardGlowHover.toFixed(3)}`)
+      setTiltStyles(shell, currentX, currentY)
 
       const shouldContinue =
         Math.abs(targetX - currentX) > 0.01 ||
@@ -190,6 +231,98 @@ const EmployeeCard = () => {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const shell = shellRef.current
+
+    if (!shell || motionMode !== 'enabled' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return undefined
+    }
+
+    let targetX = 0
+    let targetY = 0
+    let currentX = 0
+    let currentY = 0
+    let rafId = null
+
+    const maxTiltX = 7
+    const maxTiltY = 8
+    const lerp = 0.1
+
+    const animate = () => {
+      currentX += (targetX - currentX) * lerp
+      currentY += (targetY - currentY) * lerp
+
+      setTiltStyles(shell, currentX, currentY)
+
+      const shouldContinue =
+        Math.abs(targetX - currentX) > 0.01 ||
+        Math.abs(targetY - currentY) > 0.01
+
+      if (shouldContinue) {
+        rafId = window.requestAnimationFrame(animate)
+      } else {
+        rafId = null
+      }
+    }
+
+    const requestAnimate = () => {
+      if (!rafId) {
+        rafId = window.requestAnimationFrame(animate)
+      }
+    }
+
+    const handleOrientation = (event) => {
+      const beta = typeof event.beta === 'number' ? event.beta : 0
+      const gamma = typeof event.gamma === 'number' ? event.gamma : 0
+
+      const pitch = clamp(beta, -45, 45)
+      const roll = clamp(gamma, -30, 30)
+
+      targetX = clamp((-pitch / 45) * maxTiltX, -maxTiltX, maxTiltX)
+      targetY = clamp((roll / 30) * maxTiltY, -maxTiltY, maxTiltY)
+      requestAnimate()
+    }
+
+    const handleOrientationChange = () => {
+      targetX = 0
+      targetY = 0
+      requestAnimate()
+    }
+
+    window.addEventListener('deviceorientation', handleOrientation, true)
+    window.addEventListener('orientationchange', handleOrientationChange)
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation, true)
+      window.removeEventListener('orientationchange', handleOrientationChange)
+
+      if (rafId) {
+        window.cancelAnimationFrame(rafId)
+      }
+    }
+  }, [motionMode])
+
+  const enablePhoneMotion = async () => {
+    if (typeof window === 'undefined') return
+
+    if (typeof window.DeviceOrientationEvent === 'undefined') {
+      setMotionMode('unsupported')
+      return
+    }
+
+    if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await window.DeviceOrientationEvent.requestPermission()
+        setMotionMode(permission === 'granted' ? 'enabled' : 'denied')
+      } catch {
+        setMotionMode('denied')
+      }
+      return
+    }
+
+    setMotionMode('enabled')
+  }
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -289,6 +422,27 @@ const EmployeeCard = () => {
             </section>
           </section>
         </section>
+
+        {motionMode === 'prompt' && (
+          <div className="motion-helper" aria-live="polite">
+            <p className="motion-helper-text">Enable phone motion to tilt the card with your gyro.</p>
+            <button type="button" className="motion-enable-btn" onClick={enablePhoneMotion}>
+              Enable phone motion
+            </button>
+          </div>
+        )}
+
+        {motionMode === 'enabled' && (
+          <p className="motion-helper motion-helper-active" aria-live="polite">
+            Gyro motion is active. Move your phone to tilt the card.
+          </p>
+        )}
+
+        {motionMode === 'unsupported' && (
+          <p className="motion-helper motion-helper-disabled" aria-live="polite">
+            Your device does not expose gyro controls in this browser.
+          </p>
+        )}
       </div>
     </main>
   )
