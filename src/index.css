@@ -2,7 +2,17 @@
 @import "tailwindcss";
 
 html {
+	background: #020202;
+	color: #f4f6fa;
   scroll-behavior: smooth;
+}
+
+body,
+#root {
+	margin: 0;
+	min-height: 100vh;
+	background: #020202;
+	color: #f4f6fa;
 }
 
 /* Jab click karein toh section navbar ke peeche na chhup jaye */
@@ -407,6 +417,8 @@ section[id], div[id] {
 }
 
 .tmh-page-transition {
+	min-height: 100vh;
+	background: #020202;
 	animation: tmhFadeSlide 420ms ease;
 }
 

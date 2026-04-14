@@ -11,6 +11,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfUse from './pages/TermsOfUse'
 import CodeofConduct from './pages/CodeofConduct'
 import Legal from './pages/Legal'
+import EmployeeCard from './pages/EmployeeCard'
 
 const App = () => {
   const location = useLocation()
@@ -32,6 +33,7 @@ const App = () => {
           <Route path='/terms-of-use' element={<TermsOfUse />} />
           <Route path='/code-of-conduct' element={<CodeofConduct />} />
           <Route path='/accessibility' element={<Legal />} />
+          <Route path='/employee-card' element={<EmployeeCard />} />
         </Routes>
       </div>
     </div>
