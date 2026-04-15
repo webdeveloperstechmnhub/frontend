@@ -30,10 +30,10 @@ const FIRE_PARTICLES = [
 ]
 
 const FALLBACK_EMPLOYEE = {
-  name: 'Vishesh Verma',
-  empId: 'MN-INT-2026-011',
-  designation: 'Event Planning',
-  department: 'Event Management Department',
+  name: 'Name',
+  empId: 'ID',
+  designation: 'designation',
+  department: 'department',
 }
 
 const resolveBackendBase = () => {
