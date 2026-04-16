@@ -1,26 +1,53 @@
-# React + Vite
+﻿# Website Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Public website frontend built with React + Vite.
 
-Currently, two official plugins are available:
+## Tech Stack
+- React 19
+- Vite 7
+- React Router
+- Axios
+- TailwindCSS (with Vite plugin)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Prerequisites
+- Node.js 18+
+- npm 9+
 
-## React Compiler
+## Install
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Environment Variables
+Create `.env` in this folder:
 
-## Expanding the ESLint configuration
+```env
+VITE_BACKEND_URL=<YOUR_BACKEND_API_BASE>
+VITE_RAZORPAY_KEY_ID=<YOUR_RAZORPAY_KEY_ID>
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Example:
+```env
+VITE_BACKEND_URL=http://localhost:5000/api
+VITE_RAZORPAY_KEY_ID=<YOUR_RAZORPAY_KEY_ID>
+```
 
-## Mail form setup
+## Run
+```bash
+npm run dev
+```
 
-The Join and Contact pages use a `mailto:` link to open the user's email client.
-Update the placeholder email address in these files:
+## Build
+```bash
+npm run build
+npm run preview
+```
 
-- `src/pages/Join.jsx` (search for `YOUR_EMAIL_HERE`)
-- `src/pages/Contact.jsx` (search for `YOUR_EMAIL_HERE`)
+## Important Routes
+- `/` Home
+- `/register` Registration form
+- `/employee-card` Employee verification card
 
-When you are ready, replace `YOUR_EMAIL_HERE` with your real inbox.
+## Notes
+- Do not commit real `.env` secrets.
+- Ensure backend CORS allows the frontend origin.

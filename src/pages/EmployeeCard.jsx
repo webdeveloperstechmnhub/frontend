@@ -89,15 +89,23 @@ const EmployeeCard = () => {
   const showcaseData = useMemo(() => ({
     name: safeText(showcaseEmployee?.name, FALLBACK_EMPLOYEE.name),
     id: safeText(showcaseEmployee?.empId, FALLBACK_EMPLOYEE.empId),
+    employmentStatus:
+      String(showcaseEmployee?.employmentStatus || 'active').trim().toLowerCase() === 'terminated'
+        ? 'terminated'
+        : 'active',
     role: safeText(showcaseEmployee?.designation, FALLBACK_EMPLOYEE.designation),
     department: safeText(showcaseEmployee?.department, FALLBACK_EMPLOYEE.department),
     mobile: safeText(showcaseEmployee?.mobile),
     email: safeText(showcaseEmployee?.email),
     joiningDate: formatDate(showcaseEmployee?.joiningDate),
+    terminationDate: formatDate(showcaseEmployee?.terminationDate),
+    terminationReason: safeText(showcaseEmployee?.terminationReason, 'Not provided'),
     lastUpdated: formatDate(showcaseEmployee?.updatedAt || showcaseEmployee?.createdAt),
     photoUrl: String(showcaseEmployee?.photoUrl || '').trim(),
     initials: getInitials(showcaseEmployee?.name || 'VV'),
   }), [showcaseEmployee])
+
+  const isTerminated = showcaseData.employmentStatus === 'terminated'
 
   const showPhotoAvatar = Boolean(showcaseData.photoUrl && !avatarLoadFailed)
 
@@ -269,10 +277,21 @@ const EmployeeCard = () => {
             </section>
 
             <section className="right-zone" aria-label="Employee details panel">
+              {isTerminated && (
+                <div className="employee-status-banner">
+                  This employee profile is marked as TERMINATED.
+                </div>
+              )}
               <div className="data-panel">
                 <div className="row">
                   <p className="label">Employee ID:</p>
                   <p className="value">{showcaseData.id}</p>
+                </div>
+                <div className="row">
+                  <p className="label">Status:</p>
+                  <p className={`value employee-status-value ${isTerminated ? 'status-terminated' : 'status-active'}`}>
+                    {isTerminated ? 'Terminated' : 'Active'}
+                  </p>
                 </div>
                 <div className="row">
                   <p className="label">Designation:</p>
@@ -294,6 +313,18 @@ const EmployeeCard = () => {
                   <p className="label">Joining Date:</p>
                   <p className="value">{showcaseData.joiningDate}</p>
                 </div>
+                {isTerminated && (
+                  <>
+                    <div className="row">
+                      <p className="label">Termination Date:</p>
+                      <p className="value">{showcaseData.terminationDate}</p>
+                    </div>
+                    <div className="row">
+                      <p className="label">Termination Reason:</p>
+                      <p className="value">{showcaseData.terminationReason}</p>
+                    </div>
+                  </>
+                )}
                 <div className="row">
                   <p className="label">Last Updated:</p>
                   <p className="value">{showcaseData.lastUpdated}</p>
