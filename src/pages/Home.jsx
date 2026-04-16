@@ -8,6 +8,8 @@ import ImpactStats from '../components/ImpactStats'
 import FinalCTA from '../components/FinalCTA'
 import Footer from '../components/Footer'
 import MediaAndRecognition from '../components/MediaAndRecognition'
+
+
 const Home = () => {
   return (
     <div>

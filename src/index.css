@@ -418,7 +418,19 @@ section[id], div[id] {
 
 .tmh-page-transition {
 	min-height: 100vh;
-	background: transparent;
+	background: #020202;
+	animation: tmhFadeSlide 420ms ease;
+}
+
+@keyframes tmhFadeSlide {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

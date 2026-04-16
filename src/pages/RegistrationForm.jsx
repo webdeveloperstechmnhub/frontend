@@ -290,7 +290,6 @@ const RegistrationForm = () => {
   );
 
   const selectedPassSoldOut = Boolean(selectedTicketType?.soldOut);
-  const isFreeTicketRegistration = Number(formData.amountPaid) === 0;
 
   const hasHackathonOption = useMemo(
     () =>
@@ -498,30 +497,6 @@ const RegistrationForm = () => {
       const registerData = await registerRes.json();
       if (!registerRes.ok) {
         alert(registerData.msg || "Registration failed");
-        setLoading(false);
-        return;
-      }
-
-      const isFreeTicket = Number(registerData.amountPaid) === 0;
-
-      if (isFreeTicket) {
-        setFormData((prev) => ({
-          ...prev,
-          registrationId: registerData.registrationId,
-          qrCode: registerData.qrCode,
-        }));
-
-        localStorage.removeItem(storageKey("formData"));
-        localStorage.removeItem(storageKey("teamMembers"));
-        localStorage.removeItem(storageKey("hackathonTeamSize"));
-        localStorage.removeItem(storageKey("step"));
-
-        setStep(4);
-
-        if (registerData.emailFailed) {
-          alert("Registration successful but email delivery failed. Please download your ticket manually.");
-        }
-
         setLoading(false);
         return;
       }
@@ -1132,9 +1107,7 @@ const RegistrationForm = () => {
                       ? "REGISTRATION CLOSED"
                       : selectedPassSoldOut
                         ? "SELECT AN AVAILABLE TICKET"
-                        : isFreeTicketRegistration
-                          ? "GET FREE TICKET"
-                          : `PAY ₹${formData.amountPaid} & REGISTER`}
+                      : `PAY ₹${formData.amountPaid} & REGISTER`}
                 </button>
 
                 <div className="flex justify-center gap-4 mt-4">

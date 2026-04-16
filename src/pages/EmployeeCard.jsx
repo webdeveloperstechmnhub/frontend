@@ -30,10 +30,10 @@ const FIRE_PARTICLES = [
 ]
 
 const FALLBACK_EMPLOYEE = {
-  name: 'Name',
-  empId: 'ID',
-  designation: 'designation',
-  department: 'department',
+  name: 'Vishesh Verma',
+  empId: 'MN-INT-2026-011',
+  designation: 'Event Planning',
+  department: 'Event Management Department',
 }
 
 const resolveBackendBase = () => {
@@ -47,40 +47,11 @@ const safeText = (value, fallback = 'N/A') => {
   return v || fallback
 }
 
-const setTiltStyles = (shell, tiltX, tiltY) => {
-  const tiltMagnitude = Math.min(1, (Math.abs(tiltX) + Math.abs(tiltY)) / 13)
-  const badgeDepth = 82 - tiltMagnitude * 52
-  const badgeGlow = 0.52 - tiltMagnitude * 0.14
-  const cardGlow = 0.18 + tiltMagnitude * 0.16
-  const cardGlowHover = Math.min(0.52, cardGlow + 0.12)
-
-  shell.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`)
-  shell.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`)
-  shell.style.setProperty('--badge-z', `${badgeDepth.toFixed(2)}px`)
-  shell.style.setProperty('--badge-glow', `${badgeGlow.toFixed(3)}`)
-  shell.style.setProperty('--card-glow', `${cardGlow.toFixed(3)}`)
-  shell.style.setProperty('--card-glow-hover', `${cardGlowHover.toFixed(3)}`)
-}
-
-const resolvePhotoUrl = (value) => {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-
-  if (/^(data:|blob:|https?:)/i.test(raw)) {
-    return raw
-  }
-
-  if (raw.startsWith('//')) {
-    return `https:${raw}`
-  }
-
-  const backendBase = resolveBackendBase()
-  try {
-    const backendOrigin = new URL(backendBase).origin
-    return `${backendOrigin}${raw.startsWith('/') ? raw : `/${raw}`}`
-  } catch {
-    return raw
-  }
+const formatDate = (value, fallback = 'N/A') => {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return fallback
+  return date.toLocaleDateString()
 }
 
 const getInitials = (name) => {
@@ -100,8 +71,7 @@ const EmployeeCard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [employee, setEmployee] = useState(null)
-  const [avatarLoadError, setAvatarLoadError] = useState(false)
-  const [motionMode, setMotionMode] = useState('desktop')
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
 
   const empId = useMemo(() => {
     return (
@@ -117,47 +87,24 @@ const EmployeeCard = () => {
     id: safeText(showcaseEmployee?.empId, FALLBACK_EMPLOYEE.empId),
     role: safeText(showcaseEmployee?.designation, FALLBACK_EMPLOYEE.designation),
     department: safeText(showcaseEmployee?.department, FALLBACK_EMPLOYEE.department),
-    photoUrl: resolvePhotoUrl(showcaseEmployee?.photoUrl || showcaseEmployee?.photo),
+    mobile: safeText(showcaseEmployee?.mobile),
+    email: safeText(showcaseEmployee?.email),
+    joiningDate: formatDate(showcaseEmployee?.joiningDate),
+    lastUpdated: formatDate(showcaseEmployee?.updatedAt || showcaseEmployee?.createdAt),
+    photoUrl: String(showcaseEmployee?.photoUrl || '').trim(),
     initials: getInitials(showcaseEmployee?.name || 'VV'),
   }), [showcaseEmployee])
 
+  const showPhotoAvatar = Boolean(showcaseData.photoUrl && !avatarLoadFailed)
+
   useEffect(() => {
-    setAvatarLoadError(false)
+    setAvatarLoadFailed(false)
   }, [showcaseData.photoUrl])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined
-    }
-
-    try {
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const isTouchDevice =
-        window.matchMedia('(pointer: coarse)').matches ||
-        window.matchMedia('(max-width: 920px)').matches
-
-      if (prefersReducedMotion) {
-        setMotionMode('reduced')
-        return undefined
-      }
-
-      if (!isTouchDevice) {
-        setMotionMode('desktop')
-        return undefined
-      }
-
-      setMotionMode('mobile')
-    } catch {
-      setMotionMode('desktop')
-    }
-
-    return undefined
-  }, [])
 
   useEffect(() => {
     const shell = shellRef.current
 
-    if (!shell || motionMode !== 'desktop' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!shell || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return undefined
     }
 
@@ -175,7 +122,18 @@ const EmployeeCard = () => {
       currentX += (targetX - currentX) * lerp
       currentY += (targetY - currentY) * lerp
 
-      setTiltStyles(shell, currentX, currentY)
+      const tiltMagnitude = Math.min(1, (Math.abs(currentX) + Math.abs(currentY)) / (maxTiltX + maxTiltY))
+      const badgeDepth = 82 - tiltMagnitude * 52
+      const badgeGlow = 0.52 - tiltMagnitude * 0.14
+      const cardGlow = 0.18 + tiltMagnitude * 0.16
+      const cardGlowHover = Math.min(0.52, cardGlow + 0.12)
+
+      shell.style.setProperty('--tilt-x', `${currentX.toFixed(2)}deg`)
+      shell.style.setProperty('--tilt-y', `${currentY.toFixed(2)}deg`)
+      shell.style.setProperty('--badge-z', `${badgeDepth.toFixed(2)}px`)
+      shell.style.setProperty('--badge-glow', `${badgeGlow.toFixed(3)}`)
+      shell.style.setProperty('--card-glow', `${cardGlow.toFixed(3)}`)
+      shell.style.setProperty('--card-glow-hover', `${cardGlowHover.toFixed(3)}`)
 
       const shouldContinue =
         Math.abs(targetX - currentX) > 0.01 ||
@@ -223,7 +181,7 @@ const EmployeeCard = () => {
         window.cancelAnimationFrame(rafId)
       }
     }
-  }, [motionMode])
+  }, [])
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -289,13 +247,13 @@ const EmployeeCard = () => {
 
             <section className="left-zone" aria-label="Identity panel">
               <div className="identity-stack">
-                <div className="avatar" aria-label={showcaseData.photoUrl && !avatarLoadError ? 'Employee profile photo' : 'Employee initials'}>
-                  {showcaseData.photoUrl && !avatarLoadError ? (
+                <div className={`avatar ${showPhotoAvatar ? 'avatar-photo' : ''}`} aria-label="Employee avatar">
+                  {showPhotoAvatar ? (
                     <img
-                      className="avatar-image"
+                      className="avatar-img"
                       src={showcaseData.photoUrl}
-                      alt={`${showcaseData.name} profile`}
-                      onError={() => setAvatarLoadError(true)}
+                      alt={showcaseData.name}
+                      onError={() => setAvatarLoadFailed(true)}
                     />
                   ) : (
                     showcaseData.initials
@@ -319,11 +277,26 @@ const EmployeeCard = () => {
                   <p className="label">Department:</p>
                   <p className="value">{showcaseData.department}</p>
                 </div>
+                <div className="row">
+                  <p className="label">Mobile:</p>
+                  <p className="value">{showcaseData.mobile}</p>
+                </div>
+                <div className="row">
+                  <p className="label">Email:</p>
+                  <p className="value">{showcaseData.email}</p>
+                </div>
+                <div className="row">
+                  <p className="label">Joining Date:</p>
+                  <p className="value">{showcaseData.joiningDate}</p>
+                </div>
+                <div className="row">
+                  <p className="label">Last Updated:</p>
+                  <p className="value">{showcaseData.lastUpdated}</p>
+                </div>
               </div>
             </section>
           </section>
         </section>
-
       </div>
     </main>
   )

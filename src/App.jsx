@@ -1,4 +1,3 @@
-import { Suspense, lazy } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Join from './pages/Join'
@@ -12,7 +11,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfUse from './pages/TermsOfUse'
 import CodeofConduct from './pages/CodeofConduct'
 import Legal from './pages/Legal'
-const EmployeeCard = lazy(() => import('./pages/EmployeeCard'))
+import EmployeeCard from './pages/EmployeeCard'
 
 const App = () => {
   const location = useLocation()
@@ -34,14 +33,7 @@ const App = () => {
           <Route path='/terms-of-use' element={<TermsOfUse />} />
           <Route path='/code-of-conduct' element={<CodeofConduct />} />
           <Route path='/accessibility' element={<Legal />} />
-          <Route
-            path='/employee-card'
-            element={(
-              <Suspense fallback={<div className="employee-state">Loading employee card...</div>}>
-                <EmployeeCard />
-              </Suspense>
-            )}
-          />
+          <Route path='/employee-card' element={<EmployeeCard />} />
         </Routes>
       </div>
     </div>
