@@ -30,10 +30,14 @@ const FIRE_PARTICLES = [
 ]
 
 const FALLBACK_EMPLOYEE = {
-  name: 'Vishesh Verma',
-  empId: 'MN-INT-2026-011',
-  designation: 'Event Planning',
-  department: 'Event Management Department',
+  name: 'Name',
+  empId: 'Employee ID',
+  mobile: 'Mobile',
+  email: 'Email',
+  joiningDate: 'Joining Date',
+  updatedAt: 'Last Updated',
+  designation: 'Designation',
+  department: 'Department',
 }
 
 const resolveBackendBase = () => {
@@ -194,6 +198,7 @@ const EmployeeCard = () => {
       try {
         setLoading(true)
         setError('')
+        setEmployee(null)
 
         const res = await fetch(`${resolveBackendBase()}/checkin/employee/verify`, {
           method: 'POST',
