@@ -809,6 +809,14 @@
 @media (max-width: 920px) {
   .employee-page .employee-id-shell {
     width: min(680px, 100%);
+    padding-top: 96px;
+  }
+
+  .employee-page .logo-badge {
+    top: 52px;
+    width: 96px;
+    height: 96px;
+    padding: 10px;
   }
 
   .employee-page .card {
@@ -820,6 +828,17 @@
   .employee-page .left-zone {
     border-right: none;
     border-bottom: 1px solid rgba(255, 215, 0, 0.16);
+    padding-top: calc(var(--space-4) + 24px);
+  }
+
+  .employee-page .avatar {
+    width: 132px;
+    height: 132px;
+    font-size: 46px;
+  }
+
+  .employee-page .employee-name {
+    font-size: 1.34rem;
   }
 
   .employee-page .right-zone {
