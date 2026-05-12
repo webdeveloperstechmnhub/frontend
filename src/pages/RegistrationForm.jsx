@@ -46,22 +46,6 @@ const DEFAULT_TICKET_TYPES = [
   },
 ];
 
-const DEFAULT_ZONEX_EVENT_META = {
-  shortName: "Zonex 2026",
-  date: "7 March 2026",
-  city: "Muzaffarnagar",
-  time: "9:00 AM - 5:00 PM",
-  tagline: "Where Talent Takes Shape",
-  categories: DEFAULT_CATEGORY_OPTIONS.Participation,
-  contactEmail: "techmnhub.team@gmail.com",
-  entryFee: {
-    pro: "Rs 150",
-    visitor: "Rs 150",
-  },
-  status: "active",
-  ticketTypes: DEFAULT_TICKET_TYPES,
-};
-
 const DEFAULT_GENERIC_EVENT_META = {
   shortName: "Event Registration",
   date: "Date to be announced",
@@ -159,6 +143,37 @@ const normalizeTicketTypes = (ticketTypes, entryFee) => {
   });
 };
 
+const deriveEventStatusFromSchedule = (dateValue, timeValue, fallback = "active") => {
+  const dateText = String(dateValue || "").trim();
+  if (!dateText) return fallback;
+
+  const timeText = String(timeValue || "").trim();
+  const startTime = timeText.split("-")[0].trim();
+  const candidate = new Date(`${dateText} ${startTime}`);
+
+  if (Number.isNaN(candidate.getTime())) {
+    return fallback;
+  }
+
+  return Date.now() > candidate.getTime() ? "closed" : "active";
+};
+
+const DEFAULT_ZONEX_EVENT_META = {
+  shortName: "Zonex 2026",
+  date: "7 March 2026",
+  city: "Muzaffarnagar",
+  time: "9:00 AM - 5:00 PM",
+  tagline: "Where Talent Takes Shape",
+  categories: DEFAULT_CATEGORY_OPTIONS.Participation,
+  contactEmail: "techmnhub.team@gmail.com",
+  entryFee: {
+    pro: "Rs 150",
+    visitor: "Rs 150",
+  },
+  status: "closed",
+  ticketTypes: DEFAULT_TICKET_TYPES,
+};
+
 const INITIAL_FORM_DATA = {
   fullName: "",
   mobile: "",
@@ -196,6 +211,16 @@ const RegistrationForm = () => {
 
   const [eventMeta, setEventMeta] = useState(
     eventId ? DEFAULT_GENERIC_EVENT_META : DEFAULT_ZONEX_EVENT_META,
+      eventId
+        ? DEFAULT_GENERIC_EVENT_META
+        : {
+            ...DEFAULT_ZONEX_EVENT_META,
+            status: deriveEventStatusFromSchedule(
+              DEFAULT_ZONEX_EVENT_META.date,
+              DEFAULT_ZONEX_EVENT_META.time,
+              DEFAULT_ZONEX_EVENT_META.status,
+            ),
+          },
   );
   const [eventMetaLoading, setEventMetaLoading] = useState(Boolean(eventId));
   const [eventMetaError, setEventMetaError] = useState("");
@@ -210,7 +235,14 @@ const RegistrationForm = () => {
   useEffect(() => {
     const loadEventMeta = async () => {
       if (!eventId) {
-        setEventMeta(DEFAULT_ZONEX_EVENT_META);
+        setEventMeta({
+          ...DEFAULT_ZONEX_EVENT_META,
+          status: deriveEventStatusFromSchedule(
+            DEFAULT_ZONEX_EVENT_META.date,
+            DEFAULT_ZONEX_EVENT_META.time,
+            DEFAULT_ZONEX_EVENT_META.status,
+          ),
+        });
         setEventMetaLoading(false);
         setEventMetaError("");
         return;

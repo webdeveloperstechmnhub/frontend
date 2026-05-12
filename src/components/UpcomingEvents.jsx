@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Users, Award, Trophy, X } from "lucide-react";
 import { MotionItem, MotionSection } from "./ui/MotionSystem";
+import { apiRequest } from "../utils/api";
 
 const legacyEvent = {
   id: "legacy-zonex-2026",
@@ -48,7 +49,7 @@ const legacyEvent = {
   refundPolicy: "No refund after confirmation",
   tags: ["Festival", "Talent Show", "Hackathon", "Networking"],
   registrationLink: "/registration-form",
-  status: "active",
+  status: "closed",
   ticketTypes: [
     {
       key: "pro-participation",
@@ -101,8 +102,28 @@ const normalizeTicketTypes = (event) => {
   ];
 };
 
+const isPastEventSchedule = (event) => {
+  const dateText = String(event?.date || "").trim();
+  if (!dateText) return false;
+
+  const timeText = String(event?.time || "").trim();
+  const startTime = timeText.split("-")[0].trim();
+  const candidate = new Date(`${dateText} ${startTime}`.trim());
+  if (Number.isNaN(candidate.getTime())) return false;
+
+  return Date.now() > candidate.getTime();
+};
+
+const isEventClosed = (event) => {
+  const status = String(event?.status || "").trim().toLowerCase();
+  if (status === "closed") return true;
+  if (status && status !== "active") return true;
+  if (event?.closedAt) return true;
+  return isPastEventSchedule(event);
+};
+
 const normalizeEvent = (event) => ({
-  id: event._id,
+  id: event._id || event.id || `event-${String(event.shortName || event.name || "upcoming").toLowerCase().replace(/\s+/g, "-")}`,
   name: event.name || event.shortName || "Upcoming Event",
   shortName: event.shortName || event.name || "Event",
   date: event.date || "Date to be announced",
@@ -129,7 +150,8 @@ const normalizeEvent = (event) => ({
   registrationDeadline: event.registrationDeadline || "Not announced",
   refundPolicy: event.refundPolicy || "Please check terms before payment",
   tags: Array.isArray(event.tags) ? event.tags : [],
-  status: event.status === "closed" ? "closed" : "active",
+  status: isEventClosed(event) ? "closed" : "active",
+  closedAt: event.closedAt || null,
   ticketTypes: normalizeTicketTypes(event),
   registrationLink:
     event.registrationLink && event.registrationLink !== "/registration-form"
@@ -140,8 +162,52 @@ const normalizeEvent = (event) => ({
 });
 
 const UpcomingEvents = ({ content }) => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadEvents = async () => {
+      setLoading(true);
+
+      try {
+        const response = await apiRequest("/events/public", { method: "GET" });
+        if (!active) return;
+
+        const eventsData = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.events)
+            ? response.data.events
+            : Array.isArray(response.data?.value)
+              ? response.data.value
+              : [];
+
+        if (response.ok && eventsData.length > 0) {
+          setEvents(eventsData.map(normalizeEvent));
+        } else {
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error("Failed to load events:", error);
+        if (active) {
+          setEvents([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadEvents();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openEventDetails = (event) => {
     setSelectedEvent(event);
@@ -154,7 +220,7 @@ const UpcomingEvents = ({ content }) => {
   };
 
   const renderRegisterAction = (event, className) => {
-    if (event.status === "closed") {
+    if (isEventClosed(event)) {
       return (
         <button
           type="button"
@@ -185,10 +251,16 @@ const UpcomingEvents = ({ content }) => {
     );
   };
 
-  const displayedEvents = Array.isArray(content?.events) && content.events.length > 0
-    ? content.events.map(normalizeEvent)
-    : [legacyEvent];
-  const loading = false;
+  const fallbackContentEvents =
+    Array.isArray(content?.events) && content.events.length > 0
+      ? content.events.map(normalizeEvent)
+      : [];
+
+  const displayedEvents = events.length > 0
+    ? events
+    : fallbackContentEvents.length > 0
+      ? fallbackContentEvents
+      : [legacyEvent];
 
   return (
     <>
@@ -220,7 +292,7 @@ const UpcomingEvents = ({ content }) => {
                         {event.day}
                       </span>
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
-                        {event.status === "closed"
+                        {isEventClosed(event)
                           ? "Closed"
                           : event.id === "legacy-zonex-2026"
                             ? "Limited Slots"
@@ -302,7 +374,7 @@ const UpcomingEvents = ({ content }) => {
               </button>
 
               <span className="bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold inline-block mb-4">
-                {selectedEvent.status === "closed" ? "CLOSED EVENT" : "ACTIVE EVENT"}
+                {isEventClosed(selectedEvent) ? "CLOSED EVENT" : "ACTIVE EVENT"}
               </span>
 
               <h2 className="text-3xl md:text-4xl font-black mb-4">{selectedEvent.name}</h2>

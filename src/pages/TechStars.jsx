@@ -11,8 +11,8 @@ import GlowCard from "../components/ui/GlowCard";
 const images = [stars1, stars2];
 
 const topThree = [
-  { rank: 1, name: 'Aarav Sharma', points: 980 },
-  { rank: 2, name: 'Neha Verma', points: 930 },
+  { rank: 1, name: 'Bilal', points: 980 },
+  { rank: 2, name: 'Vishu Goyal', points: 930 },
   { rank: 3, name: 'Ishan Mehta', points: 890 },
 ]
 

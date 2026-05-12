@@ -5,7 +5,7 @@ const resolveApiBases = () => {
   const candidates = [
     direct,
     backend,
-    'http://localhost:5001/api',
+    'http://localhost:5000/api',
     'http://localhost:5000/api',
   ]
     .map((url) => String(url || '').trim().replace(/\/$/, ''))

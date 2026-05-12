@@ -15,6 +15,7 @@ const ZonexLanding = () => {
   const [timeLeft, setTimeLeft] = useState({});
   const [selectedZone, setSelectedZone] = useState(null);
   const [showZoneModal, setShowZoneModal] = useState(false);
+  const eventIsClosed = new Date().getTime() >= new Date("March 7, 2026 17:00:00").getTime();
 
   // Countdown Timer
   useEffect(() => {
@@ -227,12 +228,19 @@ const ZonexLanding = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/RegistrationForm">
-              <button className="group bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl hover:shadow-[rgba(212,175,55,0.22)] hover:scale-105 transition-all duration-300 flex items-center gap-2">
-                <Zap size={20} className="group-hover:rotate-12 transition-transform" />
-                Register Now
+            {eventIsClosed ? (
+              <button type="button" disabled className="bg-[#111111] border border-[#D4AF37]/20 text-[#A0A0A0] px-8 py-4 rounded-full font-bold text-lg cursor-not-allowed flex items-center gap-2">
+                <Zap size={20} />
+                Registration Closed
               </button>
-            </Link>
+            ) : (
+              <Link to="/RegistrationForm">
+                <button className="group bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl hover:shadow-[rgba(212,175,55,0.22)] hover:scale-105 transition-all duration-300 flex items-center gap-2">
+                  <Zap size={20} className="group-hover:rotate-12 transition-transform" />
+                  Register Now
+                </button>
+              </Link>
+            )}
             <button 
               onClick={() => document.getElementById('skillZones').scrollIntoView({ behavior: 'smooth' })}
               className="bg-[#111111] backdrop-blur-sm border border-[#D4AF37]/20 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#111111] transition-all duration-300 flex items-center gap-2"
@@ -240,12 +248,19 @@ const ZonexLanding = () => {
               <Target size={20} />
               Explore Skill Zones
             </button>
-            <Link to="/RegistrationForm?type=visitor">
-              <button className="bg-[#D4AF37]/80 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#D4AF37] transition-all duration-300 flex items-center gap-2">
+            {eventIsClosed ? (
+              <button type="button" disabled className="bg-[#111111] border border-[#D4AF37]/20 text-[#A0A0A0] px-8 py-4 rounded-full font-bold text-lg cursor-not-allowed flex items-center gap-2">
                 <Users size={20} />
-                Become Visitor
+                Visitor Registration Closed
               </button>
-            </Link>
+            ) : (
+              <Link to="/RegistrationForm?type=visitor">
+                <button className="bg-[#D4AF37]/80 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#D4AF37] transition-all duration-300 flex items-center gap-2">
+                  <Users size={20} />
+                  Become Visitor
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Stats */}
@@ -319,11 +334,17 @@ const ZonexLanding = () => {
                 </div>
               </div>
 
-              <Link to="/RegistrationForm">
-                <button className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-[rgba(212,175,55,0.22)] transition-all">
-                  Register Now – Limited Slots!
+              {eventIsClosed ? (
+                <button type="button" disabled className="bg-[#111111] border border-[#D4AF37]/20 text-[#A0A0A0] px-8 py-4 rounded-full font-bold cursor-not-allowed transition-all">
+                  Registration Closed
                 </button>
-              </Link>
+              ) : (
+                <Link to="/RegistrationForm">
+                  <button className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-[rgba(212,175,55,0.22)] transition-all">
+                    Register Now – Limited Slots!
+                  </button>
+                </Link>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -39,7 +39,7 @@ const FALLBACK_EMPLOYEE = {
 const resolveBackendBase = () => {
   const direct = String(import.meta.env.VITE_BACKEND_URL || '').trim()
   const api = String(import.meta.env.VITE_API_URL || '').trim()
-  return direct || api || 'http://localhost:5001/api'
+  return direct || api || 'http://localhost:5000/api'
 }
 
 const safeText = (value, fallback = 'N/A') => {

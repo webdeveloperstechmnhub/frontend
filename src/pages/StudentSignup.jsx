@@ -54,7 +54,7 @@ const StudentSignup = () => {
       return
     }
 
-    const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001/api').trim()
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api').trim()
     const candidateEndpoints = [`${backendUrl}/student-signup`, `${backendUrl}/signup`]
 
     const payload = {
