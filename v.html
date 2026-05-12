@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Verification - Techmnhub</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            width: 340px;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .logo img {
+            width: 80px;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* 🔹 Verified Badge */
+        .badge {
+            display: inline-block;
+            background: #e6f7ee;
+            color: #28a745;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            border: 1px solid #28a745;
+        }
+
+        .status {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .verified {
+            color: #28a745;
+        }
+
+        .invalid {
+            color: red;
+        }
+
+        img.profile {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+
+    <div class="company-name">Techmnhub</div>
+
+    <!-- 🔹 Badge -->
+    <div id="badge" class="badge" style="display:none;">
+        ✔ Verified by Techmnhub
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader"></div>
+
+    <!-- Content -->
+    <div id="content" style="display:none;">
+        <div id="status" class="status"></div>
+
+        <img id="photo" class="profile" src="">
+        <h3 id="name"></h3>
+        <p id="role"></p>
+        <p id="empId"></p>
+    </div>
+
+    <div class="footer">
+        Official Verification System
+    </div>
+
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+fetch("https://api.techmnhub.com/employee/" + id)
+.then(res => {
+    if (!res.ok) throw new Error("Invalid");
+    return res.json();
+})
+.then(data => {
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("content").style.display = "block";
+
+    document.getElementById("status").innerHTML = "✅ Verified Employee";
+    document.getElementById("status").classList.add("verified");
+
+    document.getElementById("badge").style.display = "inline-block";
+
+    document.getElementById("photo").src = data.photo;
+    document.getElementById("name").innerText = data.name;
+    document.getElementById("role").innerText = data.role;
+    document.getElementById("empId").innerText = "ID: " + data.id;
+})
+.catch(() => {
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("content").style.display = "block";
+
+    document.getElementById("status").innerHTML = "❌ Invalid Employee";
+    document.getElementById("status").classList.add("invalid");
+
+    document.getElementById("photo").style.display = "none";
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "appId": "com.techmnhub.app",
+  "appName": "TechMNHub",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0a0a0a",
+      "showSpinner": false,
+      "spinnerColor": "#ffd600"
+    },
+    "StatusBar": {
+      "overlaysWebView": true,
+      "backgroundColor": "#0a0a0a",
+      "style": "dark"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "android": {
+    "backgroundColor": "#0a0a0a"
+  }
+}

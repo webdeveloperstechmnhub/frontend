@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Users, Award, Trophy, X } from "lucide-react";
-
-const backendURL = import.meta.env.VITE_BACKEND_URL;
+import { MotionItem, MotionSection } from "./ui/MotionSystem";
 
 const legacyEvent = {
   id: "legacy-zonex-2026",
@@ -140,33 +139,9 @@ const normalizeEvent = (event) => ({
         : `/registration-form/${event._id}`,
 });
 
-const UpcomingEvents = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+const UpcomingEvents = ({ content }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const res = await fetch(`${backendURL}/events/public`);
-        const data = await res.json();
-
-        if (res.ok && Array.isArray(data)) {
-          setEvents(data.map(normalizeEvent));
-        } else {
-          setEvents([]);
-        }
-      } catch (error) {
-        console.error("Failed to load events:", error);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEvents();
-  }, []);
 
   const openEventDetails = (event) => {
     setSelectedEvent(event);
@@ -210,34 +185,38 @@ const UpcomingEvents = () => {
     );
   };
 
-  const displayedEvents = events.length > 0 ? events : [legacyEvent];
+  const displayedEvents = Array.isArray(content?.events) && content.events.length > 0
+    ? content.events.map(normalizeEvent)
+    : [legacyEvent];
+  const loading = false;
 
   return (
     <>
-      <section id="UpcomingEvents" className="py-20 bg-gradient-to-b from-blue-50 to-white">
+      <MotionSection id="UpcomingEvents" className="py-20 bg-gradient-to-b from-[#0D0D0D] to-[#111111]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
+          <MotionItem className="text-center mb-12">
+            <span className="bg-[#D4AF37] text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
               Don&apos;t Miss Out
             </span>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-800 mt-6 mb-4">Upcoming Events</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Events shown here are controlled directly from the TechMNHub admin panel.
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-6 mb-4">Upcoming Events</h2>
+            <p className="text-xl text-[#A0A0A0] max-w-3xl mx-auto">
+              {content?.subtitle || 'Events shown here are controlled directly from the TechMNHub admin panel.'}
             </p>
-          </div>
+          </MotionItem>
 
           {loading ? (
-            <div className="text-center text-gray-600">Loading events...</div>
+            <div className="text-center text-[#A0A0A0]">Loading events...</div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
               {displayedEvents.map((event) => (
-                <div
+                <MotionItem
                   key={event.id}
-                  className="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100"
+                  hover
+                  className="bg-[#111111] rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100"
                 >
-                  <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white">
+                  <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] p-6 text-white">
                     <div className="flex justify-between items-start">
-                      <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
+                      <span className="bg-[#111111] backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
                         {event.day}
                       </span>
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
@@ -249,29 +228,29 @@ const UpcomingEvents = () => {
                       </span>
                     </div>
                     <h3 className="text-2xl font-bold mt-4 mb-2 leading-tight">{event.shortName}</h3>
-                    <p className="text-white/90 text-sm line-clamp-2">{event.description}</p>
+                    <p className="text-white text-sm line-clamp-2">{event.description}</p>
                   </div>
 
                   <div className="p-6">
                     <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-3 text-gray-600">
-                        <Calendar size={18} className="text-blue-600 flex-shrink-0" />
+                      <div className="flex items-center gap-3 text-[#A0A0A0]">
+                        <Calendar size={18} className="text-[#D4AF37] flex-shrink-0" />
                         <span className="text-sm">{event.date}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-600">
-                        <Clock size={18} className="text-blue-600 flex-shrink-0" />
+                      <div className="flex items-center gap-3 text-[#A0A0A0]">
+                        <Clock size={18} className="text-[#D4AF37] flex-shrink-0" />
                         <span className="text-sm">{event.time}</span>
                       </div>
-                      <div className="flex items-start gap-3 text-gray-600">
-                        <MapPin size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-3 text-[#A0A0A0]">
+                        <MapPin size={18} className="text-[#D4AF37] flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{event.venue}, {event.city}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-600">
-                        <Users size={18} className="text-blue-600 flex-shrink-0" />
+                      <div className="flex items-center gap-3 text-[#A0A0A0]">
+                        <Users size={18} className="text-[#D4AF37] flex-shrink-0" />
                         <span className="text-sm">{event.expectedParticipants} Expected</span>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-600">
-                        <Trophy size={18} className="text-blue-600 flex-shrink-0" />
+                      <div className="flex items-center gap-3 text-[#A0A0A0]">
+                        <Trophy size={18} className="text-[#D4AF37] flex-shrink-0" />
                         <span className="text-sm">Prize Pool {event.prizes}</span>
                       </div>
                     </div>
@@ -287,7 +266,7 @@ const UpcomingEvents = () => {
                     <div className="flex flex-col sm:flex-row gap-3">
                       {renderRegisterAction(
                         event,
-                        "w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300",
+                        "w-full bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300",
                       )}
                       <button
                         onClick={() => openEventDetails(event)}
@@ -298,26 +277,26 @@ const UpcomingEvents = () => {
                       </button>
                     </div>
                   </div>
-                </div>
+                </MotionItem>
               ))}
             </div>
           )}
         </div>
-      </section>
+      </MotionSection>
 
       {showModal && selectedEvent && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 bg-[#0D0D0D]/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-[#111111] rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white relative">
+            <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] p-8 text-white relative">
               <button
                 onClick={closeModal}
-                className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                className="absolute top-4 right-4 bg-[#111111] hover:bg-[#111111]/30 rounded-full p-2 transition-colors"
               >
                 <X size={24} />
               </button>
@@ -328,7 +307,7 @@ const UpcomingEvents = () => {
 
               <h2 className="text-3xl md:text-4xl font-black mb-4">{selectedEvent.name}</h2>
 
-              <div className="flex flex-wrap gap-4 text-white/90">
+              <div className="flex flex-wrap gap-4 text-white">
                 <div className="flex items-center gap-2">
                   <Calendar size={18} />
                   <span>{selectedEvent.date}</span>
@@ -346,36 +325,36 @@ const UpcomingEvents = () => {
 
             <div className="p-8">
               <div className="mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">About Event</h3>
-                <p className="text-gray-600 leading-relaxed">{selectedEvent.description}</p>
+                <h3 className="text-2xl font-bold text-white mb-4">About Event</h3>
+                <p className="text-[#A0A0A0] leading-relaxed">{selectedEvent.description}</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-blue-50 p-4 rounded-xl text-center">
-                  <Users className="text-blue-600 mx-auto mb-2" size={24} />
-                  <span className="block text-2xl font-bold text-gray-800">{selectedEvent.expectedParticipants}</span>
-                  <span className="text-sm text-gray-600">Participants</span>
+                <div className="bg-[#111111] p-4 rounded-xl text-center">
+                  <Users className="text-[#D4AF37] mx-auto mb-2" size={24} />
+                  <span className="block text-2xl font-bold text-white">{selectedEvent.expectedParticipants}</span>
+                  <span className="text-sm text-[#A0A0A0]">Participants</span>
                 </div>
                 <div className="bg-green-50 p-4 rounded-xl text-center">
                   <Award className="text-green-600 mx-auto mb-2" size={24} />
-                  <span className="block text-2xl font-bold text-gray-800">{selectedEvent.skillZones}</span>
-                  <span className="text-sm text-gray-600">Skill Zones</span>
+                  <span className="block text-2xl font-bold text-white">{selectedEvent.skillZones}</span>
+                  <span className="text-sm text-[#A0A0A0]">Skill Zones</span>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-xl text-center">
-                  <Trophy className="text-purple-600 mx-auto mb-2" size={24} />
-                  <span className="block text-2xl font-bold text-gray-800">{selectedEvent.prizes}</span>
-                  <span className="text-sm text-gray-600">Prize Pool</span>
+                <div className="bg-[#111111] p-4 rounded-xl text-center">
+                  <Trophy className="text-[#D4AF37] mx-auto mb-2" size={24} />
+                  <span className="block text-2xl font-bold text-white">{selectedEvent.prizes}</span>
+                  <span className="text-sm text-[#A0A0A0]">Prize Pool</span>
                 </div>
                 <div className="bg-yellow-50 p-4 rounded-xl text-center">
                   <Calendar className="text-yellow-600 mx-auto mb-2" size={24} />
-                  <span className="block text-sm font-bold text-gray-800">Last Date</span>
-                  <span className="text-sm text-gray-600">{selectedEvent.registrationDeadline}</span>
+                  <span className="block text-sm font-bold text-white">Last Date</span>
+                  <span className="text-sm text-[#A0A0A0]">{selectedEvent.registrationDeadline}</span>
                 </div>
               </div>
 
               {selectedEvent.highlights.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Event Highlights</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Event Highlights</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     {selectedEvent.highlights.map((item, idx) => (
                       <div key={`${selectedEvent.id}-highlight-${idx}`} className="flex items-start gap-3">
@@ -391,12 +370,12 @@ const UpcomingEvents = () => {
 
               {selectedEvent.categories.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Skill Zones and Categories</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Skill Zones and Categories</h3>
                   <div className="flex flex-wrap gap-3">
                     {selectedEvent.categories.map((cat, idx) => (
                       <span
                         key={`${selectedEvent.id}-category-${idx}`}
-                        className="bg-gray-100 text-gray-800 px-4 py-2 rounded-full text-sm font-medium"
+                        className="bg-gray-100 text-white px-4 py-2 rounded-full text-sm font-medium"
                       >
                         {cat}
                       </span>
@@ -406,30 +385,30 @@ const UpcomingEvents = () => {
               )}
 
               <div className="mb-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">Registration Fees</h3>
+                <h3 className="text-2xl font-bold text-white mb-4">Registration Fees</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {selectedEvent.ticketTypes.map((ticketType) => (
                     <div key={ticketType.key} className="border border-green-200 rounded-xl p-4 text-center bg-green-50">
-                      <span className="text-sm text-gray-600">{ticketType.name}</span>
+                      <span className="text-sm text-[#A0A0A0]">{ticketType.name}</span>
                       <span className="block text-2xl font-bold text-green-600">₹{ticketType.price}</span>
-                      <span className="text-xs text-gray-500">{ticketType.appliesTo}</span>
+                      <span className="text-xs text-[#A0A0A0]">{ticketType.appliesTo}</span>
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500 mt-2">{selectedEvent.refundPolicy}</p>
+                <p className="text-sm text-[#A0A0A0] mt-2">{selectedEvent.refundPolicy}</p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 p-6 rounded-xl">
-                  <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <MapPin size={18} className="text-blue-600" />
+                  <h4 className="font-bold text-white mb-3 flex items-center gap-2">
+                    <MapPin size={18} className="text-[#D4AF37]" />
                     Venue
                   </h4>
                   <p className="text-gray-700">{selectedEvent.location}</p>
                 </div>
                 <div className="bg-gray-50 p-6 rounded-xl">
-                  <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <Award size={18} className="text-blue-600" />
+                  <h4 className="font-bold text-white mb-3 flex items-center gap-2">
+                    <Award size={18} className="text-[#D4AF37]" />
                     Contact
                   </h4>
                   <p className="text-gray-700">Email: {selectedEvent.contact.email}</p>
@@ -447,7 +426,7 @@ const UpcomingEvents = () => {
               </button>
               {renderRegisterAction(
                 selectedEvent,
-                "px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all",
+                "px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-white rounded-xl font-semibold hover:shadow-lg transition-all",
               )}
             </div>
           </div>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee ID Card</title>
+  <style>
+    :root {
+      --bg: #e8dfcf;
+      --card-radius: 20px;
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      --left-start: #050505;
+      --left-end: #1f1f1f;
+      --gold-start: #facc15;
+      --gold-end: #f59e0b;
+      --right-bg: #f5f1e8;
+      --label: #1f2937;
+      --value: #4b5563;
+      --name: #f9d874;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at top right, #f3ead9 0%, var(--bg) 45%, #ddd1bc 100%);
+      font-family: Inter, Poppins, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #111827;
+    }
+
+    .employee-id-shell {
+      width: min(920px, 100%);
+      display: grid;
+      justify-items: center;
+      gap: 20px;
+    }
+
+    .company-logo {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #fffef9, #f0e6d6);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      transform: translateY(4px);
+      animation: float 4s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    .company-logo img {
+      width: 76%;
+      height: 76%;
+      object-fit: contain;
+    }
+
+    .id-card {
+      width: 100%;
+      min-height: 440px;
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      display: grid;
+      grid-template-columns: 40% 60%;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+      background: #ffffff;
+    }
+
+    .id-card:hover {
+      transform: scale(1.012);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .id-left {
+      background: linear-gradient(160deg, var(--left-start), var(--left-end));
+      padding: 32px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .left-stack {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .avatar {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--gold-start), var(--gold-end));
+      color: #111111;
+      font-weight: 700;
+      font-size: 52px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow:
+        0 0 0 8px rgba(250, 204, 21, 0.14),
+        0 0 40px rgba(250, 204, 21, 0.6);
+    }
+
+    .employee-name {
+      margin: 0;
+      color: var(--name);
+      font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      text-wrap: balance;
+    }
+
+    .id-right {
+      background: var(--right-bg);
+      padding: 40px;
+      display: grid;
+      align-content: center;
+      gap: 22px;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      align-items: start;
+      gap: 12px;
+      font-size: 1.02rem;
+      line-height: 1.45;
+    }
+
+    .detail-label {
+      margin: 0;
+      font-weight: 700;
+      color: var(--label);
+      letter-spacing: 0.01em;
+    }
+
+    .detail-value {
+      margin: 0;
+      color: var(--value);
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    @keyframes float {
+      0%,
+      100% {
+        transform: translateY(4px);
+      }
+
+      50% {
+        transform: translateY(-2px);
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 16px;
+      }
+
+      .employee-id-shell {
+        gap: 14px;
+      }
+
+      .company-logo {
+        width: 92px;
+        height: 92px;
+      }
+
+      .id-card {
+        grid-template-columns: 1fr;
+        min-height: unset;
+      }
+
+      .id-left,
+      .id-right {
+        padding: 28px 22px;
+      }
+
+      .avatar {
+        width: 136px;
+        height: 136px;
+        font-size: 42px;
+      }
+
+      .detail-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="employee-id-shell">
+    <div class="company-logo" aria-label="Company logo">
+      <img src="/TechMNHub-Logo.png" alt="TechMNHub logo" />
+    </div>
+
+    <section class="id-card" aria-label="Employee ID Card">
+      <div class="id-left">
+        <div class="left-stack">
+          <div class="avatar" aria-label="Employee initials">VV</div>
+          <h1 class="employee-name">Vishesh Verma</h1>
+        </div>
+      </div>
+
+      <div class="id-right">
+        <div class="detail-row">
+          <p class="detail-label">Employee ID:</p>
+          <p class="detail-value">MN-INT-2026-011</p>
+        </div>
+
+        <div class="detail-row">
+          <p class="detail-label">Designation:</p>
+          <p class="detail-value">Event Planning</p>
+        </div>
+
+        <div class="detail-row">
+          <p class="detail-label">Department:</p>
+          <p class="detail-value">Event Management Department</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Card</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  height: 100vh;
+  background: radial-gradient(circle at top, #1a1a1a, #000);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.brand-badge {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Background effect */
+body::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: url('https://www.transparenttextures.com/patterns/stardust.png');
+  opacity: 0.15;
+}
+
+/* Glass Card */
+.card {
+  width: 900px;
+  padding: 40px;
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 40px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Left Side */
+.left {
+  text-align: center;
+}
+
+.logo {
+}
+
+.logo img {
+  width: 92px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.35));
+}
+
+.profile {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: url('https://via.placeholder.com/160') center/cover;
+  margin: 20px auto;
+  border: 3px solid gold;
+}
+
+.name {
+  font-size: 26px;
+  color: gold;
+  font-weight: 600;
+}
+
+/* Right Side */
+.right {
+  width: 50%;
+}
+
+.info {
+  margin: 18px 0;
+  font-size: 18px;
+}
+
+.label {
+  color: #aaa;
+}
+
+.value {
+  color: gold;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+/* Hover Glow */
+.card:hover {
+  transform: scale(1.02);
+  transition: 0.3s ease;
+  box-shadow: 0 0 60px rgba(255,215,0,0.2);
+}
+
+/* Responsive */
+@media(max-width: 768px) {
+  .card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .right {
+    width: 100%;
+    margin-top: 20px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="brand-badge">
+  <div class="logo">
+    <img src="/TechMNHub-Logo.png" alt="TechMNHub logo">
+  </div>
+</div>
+
+<div class="card">
+  
+  <!-- LEFT -->
+  <div class="left">
+    <div class="profile" id="profilePic"></div>
+    <div class="name" id="name"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="info"><span class="label">Employee Id :</span><span class="value" id="id"></span></div>
+    <div class="info"><span class="label">Designation :</span><span class="value" id="role"></span></div>
+    <div class="info"><span class="label">Department :</span><span class="value" id="department"></span></div>
+  </div>
+
+</div>
+
+<script>
+const employeeData = {
+  name: "Kartik Kamiya",
+  id: "MN-INT-2026-007",
+  role: "Video Editor",
+  department: "Social Media",
+  profilePic: "https://via.placeholder.com/160"
+};
+
+// Inject data
+document.getElementById("name").textContent = employeeData.name;
+document.getElementById("id").textContent = employeeData.id;
+document.getElementById("role").textContent = employeeData.role;
+document.getElementById("department").textContent = employeeData.department;
+document.getElementById("profilePic").style.backgroundImage = `url(${employeeData.profilePic})`;
+</script>
+
+</body>
+</html>

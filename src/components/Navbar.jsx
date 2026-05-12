@@ -1,407 +1,270 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { HashLink } from 'react-router-hash-link'; // HashLink import karein
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { HashLink } from 'react-router-hash-link';
+import { clearAllSessions, hasInstituteSession, hasStudentSession } from '../utils/session';
+
+const navItems = [
+  { label: 'Home', to: '/' },
+  { label: 'About', to: '/about' },
+  { label: 'Events', to: '/#events', hash: true },
+  { label: 'Contact', to: '/contact' },
+];
+
+const actionItems = [
+  { label: 'Book a Session', to: '/join', primary: true },
+  { label: 'Login', to: '/login', secondary: true },
+];
 
 const Navbar = () => {
-    const handleScrollToTop = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [sessionType, setSessionType] = useState('none');
+
+  const hasSession = sessionType !== 'none';
+  const dashboardPath = sessionType === 'student' ? '/student/dashboard' : sessionType === 'institute' ? '/institute/dashboard' : '/login';
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 8);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (hasStudentSession()) {
+      setSessionType('student');
+      return;
+    }
+
+    if (hasInstituteSession()) {
+      setSessionType('institute');
+      return;
+    }
+
+    setSessionType('none');
+  }, [location.pathname]);
+
+  const isActive = (item) => {
+    if (item.hash) {
+      return location.pathname === '/' && location.hash === '#events';
+    }
+
+    return location.pathname === item.to;
+  };
+
+  const handleHomeClick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleLogout = () => {
+    clearAllSessions();
+    setSessionType('none');
+    navigate('/login');
+  };
+
+  const navLinkClasses = (active) =>
+    [
+      'relative inline-flex items-center text-sm font-medium tracking-[0.18em] uppercase transition-all duration-300',
+      active ? 'text-[#D4AF37]' : 'text-[#A0A0A0] hover:text-white',
+      'after:absolute after:-bottom-2 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-[#D4AF37] after:transition-transform after:duration-300 hover:after:scale-x-100',
+      active ? 'after:scale-x-100' : '',
+    ].join(' ');
+
+  const mobileLinkClasses = (active) =>
+    [
+      'flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-medium transition-all duration-300',
+      active
+        ? 'border-[#D4AF37]/60 bg-[#D4AF37]/10 text-[#D4AF37] shadow-[0_0_24px_rgba(212,175,55,0.15)]'
+        : 'border-[#D4AF37]/10 bg-[#111111] text-[#A0A0A0] hover:border-[#D4AF37]/40 hover:bg-[#111111] hover:text-white',
+    ].join(' ');
+
   return (
-    <nav className="bg-white shadow-md fixed top-0 w-full z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-6xl">
-        
-        {/* LOGO: Link to Home Page */}
-        <Link to="/" className="flex items-center group cursor-pointer" onClick={handleScrollToTop}>
-          <img 
-            src="/TechMNHub-Logo.png" 
-            alt="Logo" 
-            className="h-12 w-12 rounded-full border shadow-sm transition-transform duration-300 group-hover:rotate-12" 
-          />
-          <h2 className='text-2xl font-bold ml-3 text-gray-900'>TechMNHub</h2>
-        </Link>
+    <motion.header
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+      className={`fixed top-0 z-50 w-full border-b transition-all duration-300 ${
+        isScrolled
+          ? 'border-[#D4AF37]/10 bg-[#0D0D0D]/90 shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl'
+          : 'border-transparent bg-[#0D0D0D]/75 backdrop-blur-md'
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex w-full items-center justify-between gap-4 md:hidden">
+          <Link to="/" onClick={handleHomeClick} className="flex items-center gap-3">
+            <img
+              src="/TechMNHub-Logo.png"
+              alt="TechMNHub logo"
+              className="h-10 w-10 rounded-full border border-[#D4AF37]/35 object-cover shadow-[0_0_18px_rgba(212,175,55,0.12)]"
+            />
+            <span className="text-lg font-bold tracking-[0.14em] text-white">TechMNHub</span>
+          </Link>
 
-        <div className="flex items-center space-x-8">
-          <ul className="hidden md:flex space-x-8">
-            {/* Direct Page Link */}
-            <li>
-              <Link to="/" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110" onClick={handleScrollToTop}>
-                Home
-              </Link>
-            </li>
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((current) => !current)}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#D4AF37]/20 bg-[#111111] text-white transition-all duration-300 hover:border-[#D4AF37]/40 hover:bg-[#111111] hover:text-[#D4AF37]"
+          >
+            <span className="text-2xl leading-none">{isMenuOpen ? '×' : '☰'}</span>
+          </button>
+        </div>
 
-            {/* Scroll to Section Links (Using HashLink) */}
-            <li>
-              <Link smooth to="/about" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-                About
-              </Link>
-            </li>
-            <li>
-              <HashLink smooth to="/#events" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-                Events
-              </HashLink>
-            </li>
-            
-            {/* Another Direct Page Link */}
-            <li>
-              <Link to="/contact" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-                Contact
-              </Link>
-            </li>
-          </ul>
+        <div className="hidden w-full items-center md:grid md:grid-cols-[1fr_auto_1fr] md:gap-6">
+          <div className="flex items-center gap-3 justify-self-start">
+            {actionItems.map((item) => {
+              if (item.secondary && hasSession) {
+                return (
+                  <button
+                    key="logout"
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/20 bg-transparent px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 active:scale-[0.98] hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.16)]"
+                  >
+                    Logout
+                  </button>
+                );
+              }
 
-          {/* Join Us Page Link */}
-          <Link to="/join">
-            <button className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300 active:scale-95">
-              Join Us
-            </button>
+              const sharedClasses =
+                'inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98]';
+
+              if (item.primary) {
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className={`${sharedClasses} bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-[#0D0D0D] shadow-[0_0_20px_rgba(212,175,55,0.28)] hover:scale-[1.04] hover:shadow-[0_0_34px_rgba(212,175,55,0.45)]`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`${sharedClasses} border border-[#D4AF37]/20 bg-transparent text-white hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.16)]`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+
+          </div>
+
+          <nav className="flex items-center justify-center gap-8">
+            {navItems.map((item) => {
+              const active = isActive(item);
+
+              if (item.hash) {
+                return (
+                  <HashLink key={item.label} smooth to={item.to} className={navLinkClasses(active)}>
+                    {item.label}
+                  </HashLink>
+                );
+              }
+
+              return (
+                <Link key={item.label} to={item.to} onClick={item.to === '/' ? handleHomeClick : undefined} className={navLinkClasses(active)}>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <Link to="/" onClick={handleHomeClick} className="flex items-center justify-self-end gap-3 transition-transform duration-300 hover:scale-[1.02]">
+            <img
+              src="/TechMNHub-Logo.png"
+              alt="TechMNHub logo"
+              className="h-11 w-11 rounded-full border border-[#D4AF37]/35 object-cover shadow-[0_0_18px_rgba(212,175,55,0.12)]"
+            />
+            <span className="text-lg font-bold tracking-[0.18em] text-white">TechMNHub</span>
           </Link>
         </div>
+
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              id="mobile-nav-menu"
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="absolute left-4 right-4 top-full mt-3 rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#0D0D0D]/96 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl md:hidden"
+            >
+              <div className="flex flex-col gap-3">
+                {navItems.map((item) => {
+                  const active = isActive(item);
+
+                  if (item.hash) {
+                    return (
+                      <HashLink key={item.label} smooth to={item.to} className={mobileLinkClasses(active)}>
+                        <span>{item.label}</span>
+                        <span className="text-[#D4AF37]">↗</span>
+                      </HashLink>
+                    );
+                  }
+
+                  return (
+                    <Link key={item.label} to={item.to} onClick={item.to === '/' ? handleHomeClick : undefined} className={mobileLinkClasses(active)}>
+                      <span>{item.label}</span>
+                      {active ? <span className="text-[#D4AF37]">Active</span> : null}
+                    </Link>
+                  );
+                })}
+
+                <div className="mt-2 grid gap-3 pt-2">
+                  {hasSession ? (
+                    <Link
+                      to={dashboardPath}
+                      className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/12 px-5 py-3 text-sm font-semibold text-[#D4AF37] transition-all duration-300 hover:bg-[#D4AF37]/18"
+                    >
+                      Open Dashboard
+                    </Link>
+                  ) : null}
+
+                  <Link
+                    to="/join"
+                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#0D0D0D] shadow-[0_0_24px_rgba(212,175,55,0.32)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_34px_rgba(212,175,55,0.5)]"
+                  >
+                    Book a Session
+                  </Link>
+
+                  {hasSession ? (
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:border-[#D4AF37]/45 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37]"
+                    >
+                      Login
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </nav>
+    </motion.header>
   );
 };
 
 export default Navbar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-// import { Link } from 'react-router-dom'; // 1. Link import karein
-
-// const Navbar = () => {
-//   return (
-//     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
-//       <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-6xl">
-        
-//         {/* Left Side: Logo (Click karne par home par le jayega) */}
-//         <Link to="/" className="flex items-center group cursor-pointer">
-//           <img 
-//             src="/TechMNHub-Logo.png" 
-//             alt="Logo" 
-//             className="h-12 w-12 rounded-full object-cover transition-transform duration-300 group-hover:rotate-12" 
-//           />
-//           <h2 className='text-2xl font-bold ml-3 text-gray-900'>TechMNHub</h2>
-//         </Link>
-
-//         {/* Right Side: Links */}
-//         <div className="flex items-center space-x-8">
-//           <ul className="hidden md:flex space-x-8">
-//             <li>
-//               <Link to="/" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-//                 Home
-//               </Link>
-//             </li>
-//             <li>
-//               <Link to="/about" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-//                 About
-//               </Link>
-//             </li>
-//             <li>
-//               <Link to="/events" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-//                 Events
-//               </Link>
-//             </li>
-//             <li>
-//               <Link to="/media" className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110">
-//                 Media
-//               </Link>
-//             </li>
-//           </ul>
-
-//           {/* Join Us Button (Redirect to a signup/contact page) */}
-//           <Link to="/join">
-//             <button className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300 active:scale-95">
-//               Join Us
-//             </button>
-//           </Link>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
-
-// export default Navbar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-
-// const Navbar = () => {
-//   return (
-//     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
-//       <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-6xl">
-//         {/* Left Side: Logo and Brand */}
-//         <div className="flex items-center group cursor-pointer">
-//           <img 
-//             src="/TechMNHub-Logo.png" // Replace with your actual logo URL
-//             alt="Logo" 
-//             className="h-12 w-12 rounded-full object-cover border border-gray-100 shadow-sm transition-transform duration-300 group-hover:rotate-12" 
-//           />
-//           <h2 className='text-2xl flex items-center font-bold ml-3 text-gray-900 tracking-tight'>
-//             TechMNHub
-//           </h2>
-//         </div>
-
-//         {/* Right Side: Links and Button */}
-//         <div className="flex items-center space-x-8">
-//           {/* Navigation Links */}
-//           <ul className="hidden md:flex space-x-8">
-//             {['Home', 'About', 'Events', 'Media'].map((item) => (
-//               <li key={item}>
-//                 <a 
-//                   href={`#${item.toLowerCase()}`} 
-//                   className="inline-block text-gray-700 hover:text-blue-600 font-semibold transition-all duration-300 transform hover:scale-110 active:scale-95"
-//                 >
-//                   {item}
-//                 </a>
-//               </li>
-//             ))}
-//           </ul>
-
-//           {/* Join Us Button */}
-//           <button className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300 active:scale-95">
-//             Join Us
-//           </button>
-
-//           {/* Mobile Menu Toggle */}
-//           <div className="md:hidden">
-//             <button className="text-gray-700 focus:outline-none p-2 hover:bg-gray-100 rounded-lg transition-colors">
-//               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-//               </svg>
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
-
-// export default Navbar;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-
-
-// const Navbar = () => {
-//   return (
-//     <nav className="bg-white shadow-md fixed top-0 w-full z-50">
-//       <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-6xl">
-//         {/* Left Side: Logo */}
-//         <div className="flex items-center">
-//           <img 
-//             src="/TechMNHub-Logo.png" // Replace with your actual logo URL
-//             alt="Logo" 
-//             className="h-10 w-auto" // Adjust height as needed
-//           />
-//           {/* Or use text logo: <span className="text-xl font-bold text-gray-900">Your Logo</span> */}
-//           <h2 className='text-3xl flex items-center font-bold leading-tight mb-2 ml-1 text-gray-900'>TechMNHub</h2>
-//         </div>
-
-//         {/* Right Side: Links and Button */}
-//         <div className="flex items-center space-x-6">
-//           {/* Navigation Links */}
-//           <ul className="hidden md:flex space-x-6">
-//             <li>
-//               <a 
-//                 href="#home" 
-//                 className="text-gray-700 hover:text-blue-600 hover:scale-110 transition-all duration-300 font-medium"
-//               >
-//                 Home
-//               </a>
-//             </li>
-//             <li>
-//               <a 
-//                 href="#about" 
-//                 className="text-gray-700 hover:text-blue-600 hover:scale-110 transition-all duration-300 font-medium"
-//               >
-//                 About
-//               </a>
-//             </li>
-            
-            
-//             <li>
-//               <a 
-//                 href="#events" 
-//                 className="text-gray-700 hover:text-blue-600 hover:scale-110 transition-all duration-300 font-medium"
-//               >
-//                 Events
-//               </a>
-//             </li>
-            
-//             <li>
-//               <a 
-//                 href="#media" 
-//                 className="text-gray-700 hover:text-blue-600 hover:scale-110 transition-all duration-300 font-medium"
-//               >
-//                 Media
-//               </a>
-//             </li>
-//           </ul>
-
-//           {/* Join Us Button with Glass Hover Effect */}
-//           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-opacity-80 hover:backdrop-blur-sm hover:bg-white/20 hover:text-blue-600 transition-all duration-300 border border-transparent hover:border-blue-600">
-//             Join Us
-//           </button>
-
-//           {/* Mobile Menu Toggle (Optional, for responsiveness) */}
-//           <div className="md:hidden">
-//             <button className="text-gray-700 focus:outline-none">
-//               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-//               </svg>
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
-
-// export default Navbar;

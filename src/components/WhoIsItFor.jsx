@@ -6,70 +6,80 @@ import {
   Calendar,
   ShoppingBag,
 } from "lucide-react";
+import { MotionItem, MotionSection } from "./ui/MotionSystem";
 
-const users = [
+const defaultContent = {
+  title: "Who Is It For?",
+  users: [
   {
     title: "Students",
     description:
       "Build your verified skill profile, earn recognition, and unlock real opportunities.",
-    icon: <GraduationCap size={40} />,
   },
   {
     title: "Schools & Colleges",
     description:
       "Showcase student achievements, activities and institutional impact in one unified platform.",
-    icon: <School size={40} />,
   },
   {
     title: "Institutes / Coaching",
     description:
       "Offer certifications, skill programs and gain verified student reach.",
-    icon: <BookOpen size={40} />,
   },
   {
     title: "Event Organizers",
     description:
       "Host competitions, hackathons and reward talent with verified credentials.",
-    icon: <Calendar size={40} />,
   },
   {
     title: "Vendors (Coming Soon)",
     description:
       "Support student growth with tools, services and ecosystem partnerships.",
-    icon: <ShoppingBag size={40} />,
   },
-];
+  ],
+};
 
-const WhoIsItFor = () => {
+const iconMap = {
+  Students: <GraduationCap size={40} />,
+  "Schools & Colleges": <School size={40} />,
+  "Institutes / Coaching": <BookOpen size={40} />,
+  "Event Organizers": <Calendar size={40} />,
+  "Vendors (Coming Soon)": <ShoppingBag size={40} />,
+};
+
+const WhoIsItFor = ({ content }) => {
+  const section = content || defaultContent;
+
   return (
-    <section className="py-20 bg-blue-50">
+    <MotionSection className="py-20 bg-[#0D0D0D]">
       <div className="max-w-6xl mx-auto px-6 text-center">
-        <h2 className="text-4xl font-bold text-gray-800 mb-12">
-          Who Is It For?
-        </h2>
+        <MotionItem as="h2" className="text-4xl font-bold text-white mb-12">
+          {section.title}
+        </MotionItem>
 
         <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-8">
-          {users.map((user, index) => (
-            <div
+          {(section.users || defaultContent.users).map((user, index) => (
+            <MotionItem
               key={index}
-              className="bg-white p-6 rounded-2xl shadow-md border hover:shadow-xl hover:border-blue-500 transition duration-300 hover:-translate-y-2"
+              hover
+              className="bg-[#111111] p-6 rounded-2xl border border-[#D4AF37]/15 shadow-[0_18px_45px_rgba(0,0,0,0.34)] transition duration-300 hover:-translate-y-2 hover:border-[#D4AF37]/40 hover:shadow-[0_0_26px_rgba(212,175,55,0.12)]"
             >
-              <div className="text-blue-600 mb-4 flex justify-center">
-                {user.icon}
+              <div className="text-[#D4AF37] mb-4 flex justify-center">
+                {iconMap[user.title] || <GraduationCap size={40} />}
               </div>
 
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              <h3 className="text-xl font-semibold text-white mb-2">
                 {user.title}
               </h3>
 
-              <p className="text-gray-600 text-sm">
+              <p className="text-[#A0A0A0] text-sm">
                 {user.description}
               </p>
-            </div>
+            </MotionItem>
           ))}
         </div>
       </div>
-    </section>
+    </MotionSection>
   );
 };
 

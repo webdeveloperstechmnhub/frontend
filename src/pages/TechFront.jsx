@@ -16,19 +16,19 @@ const TechFront = () => {
             <div style={{ width: '100%', maxWidth: 800, margin: '32px auto 0 auto', display: 'flex', justifyContent: 'flex-start' }}>
               <Link to="/about" style={{
                 background: 'var(--tmh-ocean)',
-                color: '#fff',
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: 24,
                 padding: '8px 22px',
                 fontWeight: 600,
                 fontSize: 16,
                 textDecoration: 'none',
-                boxShadow: '0 2px 8px rgba(30,64,175,0.10)',
+                boxShadow: '0 2px 8px rgba(212,175,55,0.10)',
                 display: 'inline-block',
                 marginBottom: 12
               }}>← Back to About</Link>
             </div>
-            <img src={geminiImg} alt="Google Gemini" style={{ maxWidth: 180, borderRadius: 12, boxShadow: '0 2px 8px rgba(30,64,175,0.10)', marginBottom: 24 }} />
+            <img src={geminiImg} alt="Google Gemini" style={{ maxWidth: 180, borderRadius: 12, boxShadow: '0 2px 8px rgba(212,175,55,0.10)', marginBottom: 24 }} />
             <h1 style={{ color: 'var(--tmh-ocean)', fontSize: 36, marginBottom: 24 }}>TechFront Event</h1>
             <div style={{ marginBottom: 32, width: '100%' }}>
               <div className="ts-gallery-grid" style={{
@@ -46,15 +46,15 @@ const TechFront = () => {
                   <div
                     key={i}
                     style={{
-                      background: '#fff',
-                      border: '1.5px solid #d1d5db',
+                      background: '#111111',
+                      border: '1.5px solid #D4AF37',
                       borderRadius: 14,
                       minHeight: 180,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       position: 'relative',
-                      boxShadow: '0 2px 8px rgba(30,64,175,0.06)',
+                      boxShadow: '0 2px 8px rgba(212,175,55,0.08)',
                       overflow: 'hidden',
                       padding: 0,
                       cursor: 'pointer'
@@ -71,7 +71,7 @@ const TechFront = () => {
                 ))}
               </div>
             </div>
-            <div style={{ color: 'var(--tmh-ink)', fontSize: 18, textAlign: 'left', maxWidth: 700, background: '#fff', borderRadius: 16, padding: '28px 28px', boxShadow: '0 2px 8px rgba(30,64,175,0.06)', marginBottom: 32 }}>
+            <div style={{ color: 'var(--tmh-ink)', fontSize: 18, textAlign: 'left', maxWidth: 700, background: '#111111', borderRadius: 16, padding: '28px 28px', boxShadow: '0 2px 8px rgba(212,175,55,0.08)', marginBottom: 32 }}>
               <p style={{ marginBottom: 18 }}>
                 <b>The TechMNHub AI & Innovation Event</b> was organized to introduce students to the latest advancements in artificial intelligence, including Google Gemini and modern AI tools. The session highlighted the vision and mission of TechMNHub, an AI-powered platform designed to connect students, institutions, and startups to promote innovation, skill development, and collaboration. Google Student Ambassadors <b>Nikhil Tomar</b> and <b>Madhav Katyayan</b> conducted interactive sessions, demonstrating practical AI applications and engaging students in hands-on learning.
               </p>
@@ -99,7 +99,7 @@ const TechFront = () => {
                 <img
                   src={modalImg}
                   alt="Enlarged event"
-                  style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 18, boxShadow: '0 8px 32px rgba(30,64,175,0.18)', background: '#fff', border: '4px solid #fff' }}
+                  style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: 18, boxShadow: '0 8px 32px rgba(212,175,55,0.14)', background: '#111111', border: '4px solid #FFFFFF' }}
                 />
               </div>
             )}

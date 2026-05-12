@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
 import WhatIsTechMNHub from '../components/WhatIsTechMNHub'
@@ -8,37 +9,58 @@ import ImpactStats from '../components/ImpactStats'
 import FinalCTA from '../components/FinalCTA'
 import Footer from '../components/Footer'
 import MediaAndRecognition from '../components/MediaAndRecognition'
+import { apiRequest } from '../utils/api'
 
 
 const Home = () => {
+  const [homepageContent, setHomepageContent] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadHomepageContent = async () => {
+      const response = await apiRequest('/site/homepage')
+      if (mounted && response.ok) {
+        setHomepageContent(response.data)
+      }
+    }
+
+    loadHomepageContent()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   return (
-    <div>
+    <div className="tmh-page-shell">
         <Navbar />
-        
+        <div className="tmh-content-offset">
         {/* ID for Home */}
         <div id="home">
-          <Hero />
+          <Hero content={homepageContent?.hero} />
         </div>
 
-        <WhatIsTechMNHub />
+        <WhatIsTechMNHub content={homepageContent?.whatIsTechMNHub} />
         
-        <WhoIsItFor />
-        <SkillEcosystem />
+        <WhoIsItFor content={homepageContent?.whoIsItFor} />
+        <SkillEcosystem content={homepageContent?.skillEcosystem} />
 
         {/* ID for Events */}
         <div id="events">
-          <UpcomingEvents />
+          <UpcomingEvents content={homepageContent?.upcomingEvents} />
         </div>
 
-        <ImpactStats />
+        <ImpactStats content={homepageContent?.impactStats} />
 
         {/* ID for Media */}
         <div id="media">
-          <MediaAndRecognition />
+          <MediaAndRecognition content={homepageContent?.mediaAndRecognition} />
         </div>
 
-        <FinalCTA />
+        <FinalCTA content={homepageContent?.finalCta} />
         <Footer />
+        </div>
     </div>
   )
 }
