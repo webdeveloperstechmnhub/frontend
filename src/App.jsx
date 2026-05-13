@@ -6,6 +6,7 @@ import Contact from './pages/Contact'
 import About from './pages/about'
 import TechStars from './pages/TechStars'
 import TechFront from './pages/TechFront'
+import BookSession from './pages/BookSession'
 import RegistrationForm from './pages/RegistrationForm'
 import ZonexRegistration from './pages/RegistrationForm'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -90,6 +91,7 @@ const App = () => {
               <Route path='/about' element={<About />} />
               <Route path='/techstars' element={<TechStars />} />
               <Route path='/techfront' element={<TechFront />} />
+              <Route path='/book-session' element={<BookSession />} />
               <Route path='/registration-form' element={<RegistrationForm />} />
               <Route path='/registration-form/:eventId' element={<RegistrationForm />} />
               <Route path='/zonex-registration' element={<ZonexRegistration />} />

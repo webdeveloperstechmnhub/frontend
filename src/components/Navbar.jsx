@@ -12,7 +12,7 @@ const navItems = [
 ];
 
 const actionItems = [
-  { label: 'Book a Session', to: '/join', primary: true },
+  { label: 'Book a Session', to: '/book-session', primary: true },
   { label: 'Login', to: '/login', secondary: true },
 ];
 
