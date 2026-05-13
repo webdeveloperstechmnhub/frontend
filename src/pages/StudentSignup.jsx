@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { apiRequest } from '../utils/api'
 
 const flakeConfig = [
   { left: '6%', size: '7px', duration: '8.2s', delay: '-1.3s', drift: '-14px' },
@@ -54,9 +55,6 @@ const StudentSignup = () => {
       return
     }
 
-    const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api').trim()
-    const candidateEndpoints = [`${backendUrl}/student-signup`, `${backendUrl}/signup`]
-
     const payload = {
       fullName: form.fullName,
       email: form.email,
@@ -71,27 +69,15 @@ const StudentSignup = () => {
     setIsSubmitting(true)
 
     try {
-      let response = null
-      let responseData = null
+      const result = await apiRequest('/student-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-      for (const endpoint of candidateEndpoints) {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-
-        responseData = await response.json().catch(() => ({}))
-
-        if (response.status !== 404) {
-          break
-        }
-      }
-
-      if (!response || !response.ok) {
-        const fallbackMessage =
-          'Signup API is not available yet. Please ask backend team to add POST /student-signup.'
-        setSubmitError(responseData?.msg || responseData?.message || fallbackMessage)
+      if (!result.ok) {
+        const fallbackMessage = 'Signup API is not available yet. Please ask backend team to add POST /student-signup.'
+        setSubmitError(result.msg || fallbackMessage)
         return
       }
 

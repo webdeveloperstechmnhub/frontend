@@ -4,9 +4,28 @@ import StudentShell from '../../components/dashboards/StudentShell'
 import AnimatedNumber from '../../components/dashboards/AnimatedNumber'
 import SectionLayout from '../../components/ui/SectionLayout'
 import StateNotice from '../../components/ui/StateNotice'
-import { apiRequest } from '../../utils/api'
+import { apiRequest, buildAuthHeaders } from '../../utils/api'
 
 const suggestion = 'Based on your AI and communication scores, join the Prompt Engineering Challenge for +120 points.'
+
+const getStoredProfile = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('studentProfile') || '{}')
+    return {
+      fullName: parsed.fullName || 'Student',
+      studentId: parsed.studentId || 'TMH-ST-NEW',
+      institute: parsed.institute || 'Institute not available',
+      email: parsed.email || '',
+    }
+  } catch {
+    return {
+      fullName: 'Student',
+      studentId: 'TMH-ST-NEW',
+      institute: 'Institute not available',
+      email: '',
+    }
+  }
+}
 
 const StudentDashboard = () => {
   const [typed, setTyped] = useState('')
@@ -18,30 +37,15 @@ const StudentDashboard = () => {
   ])
   const [events, setEvents] = useState([])
   const [error, setError] = useState('')
-
-  const studentProfile = (() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem('studentProfile') || '{}')
-      return {
-        fullName: parsed.fullName || 'Demo Student',
-        studentId: parsed.studentId || 'TMH-DEMO-001',
-        institute: parsed.institute || 'TechMNHub Demo Institute',
-      }
-    } catch {
-      return {
-        fullName: 'Demo Student',
-        studentId: 'TMH-DEMO-001',
-        institute: 'TechMNHub Demo Institute',
-      }
-    }
-  })()
+  const [studentPoints, setStudentPoints] = useState(0)
+  const [studentProfile, setStudentProfile] = useState(getStoredProfile)
 
   const initials = studentProfile.fullName
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || '')
-    .join('') || 'DS'
+    .join('') || 'ST'
 
   useEffect(() => {
     let index = 0
@@ -61,13 +65,32 @@ const StudentDashboard = () => {
       setLoading(true)
 
       try {
-        const [leaderboard, activities, publicEvents] = await Promise.all([
+        const studentToken = localStorage.getItem('studentToken')
+        const [leaderboard, activities, publicEvents, profile] = await Promise.all([
           apiRequest('/account/leaderboard', { method: 'GET' }),
           apiRequest('/account/activities', { method: 'GET' }),
           apiRequest('/events/public', { method: 'GET' }),
+          apiRequest('/student/profile', {
+            method: 'GET',
+            headers: studentToken ? buildAuthHeaders(studentToken) : undefined,
+          }),
         ])
 
         if (!active) return
+
+        if (profile.ok && profile.data?.student) {
+          const liveProfile = {
+            fullName: profile.data.student.fullName,
+            studentId: profile.data.student.studentId,
+            institute: profile.data.student.college,
+            email: profile.data.student.email,
+          }
+          setStudentProfile(liveProfile)
+          localStorage.setItem('studentProfile', JSON.stringify({
+            ...JSON.parse(localStorage.getItem('studentProfile') || '{}'),
+            ...liveProfile,
+          }))
+        }
 
         const leaderboardEntries = Array.isArray(leaderboard.data?.entries) ? leaderboard.data.entries : []
         const activitiesList = Array.isArray(activities.data?.activities) ? activities.data.activities : []
@@ -84,10 +107,20 @@ const StudentDashboard = () => {
           return
         }
 
-        const myRank = leaderboardEntries.find((item) => /sana verma/i.test(item.name))?.rank || 1
+        const myRank = leaderboardEntries.find((item) =>
+          String(item.name || '').trim().toLowerCase() === studentProfile.fullName.trim().toLowerCase(),
+        )?.rank || 0
+        const boardPoints = leaderboardEntries.find((item) =>
+          String(item.name || '').trim().toLowerCase() === studentProfile.fullName.trim().toLowerCase(),
+        )?.points
+        const computedPoints = Number.isFinite(Number(boardPoints))
+          ? Number(boardPoints)
+          : Math.max(0, Math.round(activitiesList.reduce((sum, item) => sum + Number(item.points || 0), 0) / 4))
+
+        setStudentPoints(computedPoints)
         setStats([
           { label: 'Activities', value: activitiesList.length },
-          { label: 'Certificates', value: Math.max(2, Math.floor(activitiesList.length / 2)) },
+          { label: 'Certificates', value: Math.floor(activitiesList.length / 2) },
           { label: 'Rank', value: myRank },
         ])
 
@@ -100,8 +133,8 @@ const StudentDashboard = () => {
         )
 
         setError('')
-      } catch (error) {
-        console.error('Dashboard hydration failed:', error)
+      } catch (loadError) {
+        console.error('Dashboard hydration failed:', loadError)
         if (!active) return
         setError('Unable to load live dashboard data.')
       } finally {
@@ -116,10 +149,10 @@ const StudentDashboard = () => {
     return () => {
       active = false
     }
-  }, [])
+  }, [studentProfile.fullName])
 
   return (
-    <StudentShell title="Student Dashboard" points={2840}>
+    <StudentShell title="Student Dashboard" points={studentPoints}>
       {error ? <StateNotice type="error" message={error} /> : null}
       <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr]">
         <motion.article
@@ -139,7 +172,7 @@ const StudentDashboard = () => {
           <div className="mt-6 rounded-xl border border-yellow-400/30 bg-yellow-400/10 p-4 text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-yellow-200">Total Points</p>
             <p className="mt-1 text-4xl font-black text-yellow-300">
-              <AnimatedNumber value={2840} />
+              <AnimatedNumber value={studentPoints} />
             </p>
           </div>
         </motion.article>

@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react'
 import TmhInput from '../components/ui/TmhInput'
 import TmhButton from '../components/ui/TmhButton'
 import TmhCard from '../components/ui/TmhCard'
+import StateNotice from '../components/ui/StateNotice'
+import { apiRequest } from '../utils/api'
 
 const Join = () => {
   const [form, setForm] = useState({
@@ -10,20 +12,50 @@ const Join = () => {
     email: '',
     details: '',
   })
-
-  const mailTo = useMemo(() => 'techmnhub.team@gmail.com', [])
+  const [status, setStatus] = useState({ type: '', text: '' })
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setStatus({ type: '', text: '' })
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    const subject = 'TechMNHub Join Request'
-    const body = `Name: ${form.name}\nPhone: ${form.phone}\nEmail: ${form.email}\n\nDetails:\n${form.details}`
-    const params = new URLSearchParams({ subject, body })
-    window.location.href = `mailto:${mailTo}?${params.toString()}`
+
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim() || !form.details.trim()) {
+      setStatus({ type: 'error', text: 'Please complete all fields before sending your request.' })
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const result = await apiRequest('/site/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          details: form.details,
+          source: 'join',
+        }),
+      })
+
+      if (!result.ok) {
+        setStatus({ type: 'error', text: result.msg || 'Unable to send request right now.' })
+        return
+      }
+
+      setStatus({ type: 'success', text: 'Request sent successfully. Our team will get in touch soon.' })
+      setForm({ name: '', phone: '', email: '', details: '' })
+    } catch (error) {
+      console.error(error)
+      setStatus({ type: 'error', text: 'Unable to connect right now. Please try again.' })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -58,8 +90,10 @@ const Join = () => {
           </label>
 
           <div className="tmh-form-actions">
-            <TmhButton type="submit">Send message</TmhButton>
+            <TmhButton type="submit" disabled={submitting}>{submitting ? 'Sending...' : 'Send message'}</TmhButton>
           </div>
+
+          {status.text ? <StateNotice type={status.type === 'success' ? 'success' : 'error'} message={status.text} /> : null}
         </form>
         </TmhCard>
       </div>

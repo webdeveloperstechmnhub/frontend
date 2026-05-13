@@ -36,21 +36,14 @@ export const hasInstituteSession = () => {
 
 export const hasStudentSession = () => {
   const token = localStorage.getItem(SESSION_KEYS.studentToken);
-  return Boolean(token);
-};
+  if (!token) return false;
 
-export const createDemoStudentSession = () => {
-  localStorage.setItem(SESSION_KEYS.studentToken, `demo-student-${Date.now()}`);
-  localStorage.setItem(
-    'studentProfile',
-    JSON.stringify({
-      fullName: 'Demo Student',
-      studentId: 'TMH-DEMO-001',
-      institute: 'TechMNHub Demo Institute',
-      city: 'Muzaffarnagar',
-      isDemo: true,
-    }),
-  );
+  if (isJwtExpired(token)) {
+    clearStudentSession();
+    return false;
+  }
+
+  return true;
 };
 
 export const clearStudentSession = () => {

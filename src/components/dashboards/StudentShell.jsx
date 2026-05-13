@@ -54,7 +54,7 @@ const StudentShell = ({ title, points = 0, children }) => {
                   <Link to="/" className="text-xs font-semibold uppercase tracking-[0.22em] text-[#A0A0A0] transition hover:text-yellow-300">
                     Back to home
                   </Link>
-                  <SessionBadge label="Student live/demo" tone="demo" />
+                  <SessionBadge label="Student live" tone="live" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight text-white">{title}</h1>

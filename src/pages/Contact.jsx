@@ -5,6 +5,7 @@ import TmhInput from "../components/ui/TmhInput";
 import PageScaffold from "../components/layout/PageScaffold";
 import SectionWrapper from "../components/ui/SectionWrapper";
 import StateNotice from "../components/ui/StateNotice";
+import { apiRequest } from "../utils/api";
 
 const Contact = () => {
   const [form, setForm] = useState({
@@ -13,34 +14,50 @@ const Contact = () => {
     email: "",
     details: "",
   });
-  const [status, setStatus] = useState("");
-
-  const mailTo = useMemo(() => "YOUR_EMAIL_HERE", []);
+  const [status, setStatus] = useState({ type: "", text: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    setStatus("");
+    setStatus({ type: "", text: "" });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.details.trim()) {
-      setStatus("Please complete all fields before sending your message.");
+      setStatus({ type: "error", text: "Please complete all fields before sending your message." });
       return;
     }
 
-    const subject = "TechMNHub Contact Message";
-    const body = `Name: ${form.name}
-Phone: ${form.phone}
-Email: ${form.email}
+    setSubmitting(true);
+    try {
+      const result = await apiRequest('/site/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          details: form.details,
+          source: 'contact',
+        }),
+      });
 
-Message:
-${form.details}`;
+      if (!result.ok) {
+        setStatus({ type: "error", text: result.msg || "Failed to send your message." });
+        return;
+      }
 
-    const params = new URLSearchParams({ subject, body });
-    window.location.href = `mailto:${mailTo}?${params.toString()}`;
+      setStatus({ type: "success", text: "Message sent successfully. Our team will contact you shortly." });
+      setForm({ name: "", phone: "", email: "", details: "" });
+    } catch (error) {
+      console.error(error);
+      setStatus({ type: "error", text: "Unable to connect right now. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -93,11 +110,11 @@ ${form.details}`;
             {/* Button */}
             <div>
               <TmhButton type="submit" className="px-8 py-3 rounded-full">
-                Send message
+                {submitting ? 'Sending...' : 'Send message'}
               </TmhButton>
             </div>
 
-            {status ? <StateNotice type="error" message={status} /> : null}
+            {status.text ? <StateNotice type={status.type === 'success' ? 'success' : 'error'} message={status.text} /> : null}
           </form>
         </TmhCard>
       </SectionWrapper>

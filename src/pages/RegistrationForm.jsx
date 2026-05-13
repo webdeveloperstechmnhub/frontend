@@ -60,6 +60,9 @@ const DEFAULT_GENERIC_EVENT_META = {
   },
   status: "active",
   ticketTypes: DEFAULT_TICKET_TYPES,
+  comingSoon: false,
+  registrationEnabled: true,
+  referralCodes: [],
 };
 
 const extractAmount = (value, fallback = 150) => {
@@ -146,6 +149,7 @@ const normalizeTicketTypes = (ticketTypes, entryFee) => {
 const deriveEventStatusFromSchedule = (dateValue, timeValue, fallback = "active") => {
   const dateText = String(dateValue || "").trim();
   if (!dateText) return fallback;
+  if (/coming\s*soon/i.test(dateText)) return "coming_soon";
 
   const timeText = String(timeValue || "").trim();
   const startTime = timeText.split("-")[0].trim();
@@ -172,6 +176,9 @@ const DEFAULT_ZONEX_EVENT_META = {
   },
   status: "closed",
   ticketTypes: DEFAULT_TICKET_TYPES,
+  comingSoon: false,
+  registrationEnabled: false,
+  referralCodes: [],
 };
 
 const INITIAL_FORM_DATA = {
@@ -205,7 +212,9 @@ const RegistrationForm = () => {
     try {
       const val = localStorage.getItem(key);
       if (val !== null) return JSON.parse(val);
-    } catch {}
+    } catch {
+      return fallback;
+    }
     return fallback;
   };
 
@@ -263,7 +272,7 @@ const RegistrationForm = () => {
 
           setEventMeta({
             shortName: data.shortName || data.name || DEFAULT_GENERIC_EVENT_META.shortName,
-            date: data.date || DEFAULT_GENERIC_EVENT_META.date,
+            date: data.comingSoon ? "Coming Soon" : data.dateLabel || data.date || DEFAULT_GENERIC_EVENT_META.date,
             city: data.city || DEFAULT_GENERIC_EVENT_META.city,
             time: data.time || DEFAULT_GENERIC_EVENT_META.time,
             tagline: data.description || DEFAULT_GENERIC_EVENT_META.tagline,
@@ -273,7 +282,14 @@ const RegistrationForm = () => {
               pro: data.entryFee?.pro || DEFAULT_GENERIC_EVENT_META.entryFee.pro,
               visitor: data.entryFee?.visitor || DEFAULT_GENERIC_EVENT_META.entryFee.visitor,
             },
-            status: data.status === "closed" ? "closed" : "active",
+            status: data.comingSoon
+              ? "coming_soon"
+              : data.registrationSettings?.enabled === false || ["closed", "draft", "archived"].includes(data.status)
+                ? "closed"
+                : "active",
+            comingSoon: Boolean(data.comingSoon),
+            registrationEnabled: data.registrationSettings?.enabled !== false,
+            referralCodes: Array.isArray(data.referralCodes) ? data.referralCodes.filter((item) => item.active !== false) : [],
             ticketTypes: normalizedTicketTypes,
           });
         } else {
@@ -306,7 +322,8 @@ const RegistrationForm = () => {
   );
 
   const visitorPassEnabled = Boolean(categoryOptions.Visitor);
-  const isEventClosed = eventMeta.status === "closed";
+  const isEventComingSoon = eventMeta.status === "coming_soon" || eventMeta.comingSoon;
+  const isEventClosed = eventMeta.status === "closed" || isEventComingSoon || eventMeta.registrationEnabled === false;
 
   const availableTicketTypes = useMemo(() => {
     return (eventMeta.ticketTypes || []).filter((ticketType) => {
@@ -322,6 +339,21 @@ const RegistrationForm = () => {
   );
 
   const selectedPassSoldOut = Boolean(selectedTicketType?.soldOut);
+
+  const referralDiscount = useMemo(() => {
+    const code = String(formData.referralCode || "").trim().toUpperCase();
+    if (!code) return { code: "", discountAmount: 0 };
+    const referral = (eventMeta.referralCodes || []).find((item) => String(item.code || "").toUpperCase() === code);
+    if (!referral) return { code, discountAmount: 0 };
+    const hasHackathon = formData.subCategory.includes("Hackathon") && formData.category !== "Visitor";
+    const baseAmount = selectedTicketType
+      ? selectedTicketType.price * (hasHackathon ? hackathonTeamSize : 1)
+      : Number(formData.amountPaid || 0);
+    const rawDiscount = referral.discountType === "percent"
+      ? Math.round((baseAmount * Number(referral.discountValue || 0)) / 100)
+      : Number(referral.discountValue || 0);
+    return { code, discountAmount: Math.min(Math.max(rawDiscount, 0), baseAmount) };
+  }, [eventMeta.referralCodes, formData.amountPaid, formData.referralCode, formData.subCategory, formData.category, selectedTicketType, hackathonTeamSize]);
 
   const hasHackathonOption = useMemo(
     () =>
@@ -342,6 +374,7 @@ const RegistrationForm = () => {
       newAmount = hasHackathon && formData.category !== "Visitor"
         ? selectedTicketType.price * hackathonTeamSize
         : selectedTicketType.price;
+      newAmount = Math.max(newAmount - referralDiscount.discountAmount, 0);
     } else {
       return;
     }
@@ -357,6 +390,7 @@ const RegistrationForm = () => {
     hasHackathonOption,
     selectedTicketType,
     formData.category,
+    referralDiscount.discountAmount,
   ]);
 
   useEffect(() => {
@@ -482,7 +516,7 @@ const RegistrationForm = () => {
 
   const handlePayment = async () => {
     if (isEventClosed) {
-      alert("Registration for this event is closed.");
+      alert(isEventComingSoon ? "Registration for this event is coming soon." : "Registration for this event is closed.");
       return;
     }
 
@@ -534,6 +568,21 @@ const RegistrationForm = () => {
       }
 
       const userId = registerData._id;
+      setFormData((prev) => ({
+        ...prev,
+        amountPaid: registerData.amountPaid ?? prev.amountPaid,
+        referralCode: registerData.referralCode || prev.referralCode,
+        registrationId: registerData.registrationId || prev.registrationId,
+      }));
+
+      if (Number(registerData.amountPaid || 0) === 0 && registerData.paymentStatus === "paid") {
+        localStorage.removeItem(storageKey("formData"));
+        localStorage.removeItem(storageKey("teamMembers"));
+        localStorage.removeItem(storageKey("hackathonTeamSize"));
+        localStorage.removeItem(storageKey("step"));
+        setStep(4);
+        return;
+      }
 
       // ---------- 2️⃣ CREATE RAZORPAY ORDER ----------
       const orderRes = await fetch(`${backendURL}/payment/create-order`, {
@@ -788,7 +837,9 @@ const RegistrationForm = () => {
         )}
         {isEventClosed && (
           <div className="mb-6 bg-[#111111] border border-[#D4AF37]/20 text-[#A0A0A0] rounded-xl p-4 text-sm">
-            Registration for this event is closed. You can still view event information on this page.
+            {isEventComingSoon
+              ? "Registration for this event is coming soon. You can still view event information on this page."
+              : "Registration for this event is closed. You can still view event information on this page."}
           </div>
         )}
 
@@ -1121,6 +1172,12 @@ const RegistrationForm = () => {
                     <span>{formData.subCategory.join(", ")}</span>
                     <span className="text-[#A0A0A0]">Pass:</span>
                     <span>{formData.passName}</span>
+                    {referralDiscount.discountAmount > 0 && (
+                      <>
+                        <span className="text-[#A0A0A0]">Referral discount:</span>
+                        <span className="text-green-400 font-bold">-₹{referralDiscount.discountAmount}</span>
+                      </>
+                    )}
                     <span className="text-[#A0A0A0]">Amount:</span>
                     <span className="text-[#D4AF37] font-bold">
                       ₹{formData.amountPaid}
@@ -1135,8 +1192,10 @@ const RegistrationForm = () => {
                 >
                   {loading
                     ? "Processing..."
-                    : isEventClosed
-                      ? "REGISTRATION CLOSED"
+                    : isEventComingSoon
+                      ? "COMING SOON"
+                      : isEventClosed
+                        ? "REGISTRATION CLOSED"
                       : selectedPassSoldOut
                         ? "SELECT AN AVAILABLE TICKET"
                       : `PAY ₹${formData.amountPaid} & REGISTER`}

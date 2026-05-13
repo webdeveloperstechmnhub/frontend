@@ -15,6 +15,7 @@ import Legal from './pages/Legal'
 import EmployeeCard from './pages/EmployeeCard'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import StudentSignup from './pages/StudentSignup'
 import DashboardPage from './pages/premium/DashboardPage'
 import ProfileCardPage from './pages/premium/ProfileCardPage'
 import AdminPanelPage from './pages/premium/AdminPanelPage'
@@ -82,6 +83,7 @@ const App = () => {
               <Route path='/employee-card' element={<EmployeeCard />} />
               <Route path='/login' element={<Login />} />
               <Route path='/signup' element={<Signup />} />
+              <Route path='/student-signup' element={<StudentSignup />} />
               <Route path='/dashboard' element={<DashboardPage />} />
               <Route path='/profile-card' element={<ProfileCardPage />} />
               <Route path='/admin' element={<AdminPanelPage />} />

@@ -116,8 +116,10 @@ const isPastEventSchedule = (event) => {
 
 const isEventClosed = (event) => {
   const status = String(event?.status || "").trim().toLowerCase();
+  if (status === "published" || status === "active") return false;
+  if (status === "coming_soon") return false;
   if (status === "closed") return true;
-  if (status && status !== "active") return true;
+  if (status && !["published", "active"].includes(status)) return true;
   if (event?.closedAt) return true;
   return isPastEventSchedule(event);
 };
@@ -126,7 +128,7 @@ const normalizeEvent = (event) => ({
   id: event._id || event.id || `event-${String(event.shortName || event.name || "upcoming").toLowerCase().replace(/\s+/g, "-")}`,
   name: event.name || event.shortName || "Upcoming Event",
   shortName: event.shortName || event.name || "Event",
-  date: event.date || "Date to be announced",
+  date: event.comingSoon ? "Coming Soon" : event.dateLabel || event.date || "Date to be announced",
   day: event.day || "Upcoming",
   time: event.time || "Time to be announced",
   location: event.location || `${event.venue || "Venue"}, ${event.city || "City"}`,
@@ -150,7 +152,9 @@ const normalizeEvent = (event) => ({
   registrationDeadline: event.registrationDeadline || "Not announced",
   refundPolicy: event.refundPolicy || "Please check terms before payment",
   tags: Array.isArray(event.tags) ? event.tags : [],
-  status: isEventClosed(event) ? "closed" : "active",
+  status: event.comingSoon ? "coming_soon" : isEventClosed(event) ? "closed" : "active",
+  comingSoon: Boolean(event.comingSoon),
+  displayOptions: event.displayOptions || {},
   closedAt: event.closedAt || null,
   ticketTypes: normalizeTicketTypes(event),
   registrationLink:
@@ -220,6 +224,19 @@ const UpcomingEvents = ({ content }) => {
   };
 
   const renderRegisterAction = (event, className) => {
+    if (event.comingSoon || event.status === "coming_soon") {
+      return (
+        <button
+          type="button"
+          className={`${className} opacity-60 cursor-not-allowed`}
+          disabled
+          title="Registration coming soon"
+        >
+          Coming Soon
+        </button>
+      );
+    }
+
     if (isEventClosed(event)) {
       return (
         <button
@@ -284,7 +301,7 @@ const UpcomingEvents = ({ content }) => {
                 <MotionItem
                   key={event.id}
                   hover
-                  className="bg-[#111111] rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100"
+                    className="bg-[#111111] rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-[#D4AF37]/20"
                 >
                   <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] p-6 text-white">
                     <div className="flex justify-between items-start">
@@ -292,7 +309,9 @@ const UpcomingEvents = ({ content }) => {
                         {event.day}
                       </span>
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
-                        {isEventClosed(event)
+                        {event.comingSoon || event.status === "coming_soon"
+                          ? "Coming Soon"
+                          : isEventClosed(event)
                           ? "Closed"
                           : event.id === "legacy-zonex-2026"
                             ? "Limited Slots"
@@ -329,7 +348,7 @@ const UpcomingEvents = ({ content }) => {
 
                     <div className="flex flex-wrap gap-2 mb-6">
                       {event.tags.slice(0, 3).map((tag, idx) => (
-                        <span key={`${event.id}-tag-${idx}`} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs">
+                        <span key={`${event.id}-tag-${idx}`} className="bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded-md text-xs">
                           {tag}
                         </span>
                       ))}
@@ -342,7 +361,7 @@ const UpcomingEvents = ({ content }) => {
                       )}
                       <button
                         onClick={() => openEventDetails(event)}
-                        className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-200 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                        className="flex-1 bg-white/10 text-white px-4 py-3 rounded-xl font-semibold hover:bg-white/15 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         <Award size={18} />
                         View Details
@@ -374,7 +393,11 @@ const UpcomingEvents = ({ content }) => {
               </button>
 
               <span className="bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold inline-block mb-4">
-                {isEventClosed(selectedEvent) ? "CLOSED EVENT" : "ACTIVE EVENT"}
+                {selectedEvent.comingSoon || selectedEvent.status === "coming_soon"
+                  ? "COMING SOON"
+                  : isEventClosed(selectedEvent)
+                    ? "CLOSED EVENT"
+                    : "ACTIVE EVENT"}
               </span>
 
               <h2 className="text-3xl md:text-4xl font-black mb-4">{selectedEvent.name}</h2>
@@ -401,30 +424,32 @@ const UpcomingEvents = ({ content }) => {
                 <p className="text-[#A0A0A0] leading-relaxed">{selectedEvent.description}</p>
               </div>
 
+              {selectedEvent.displayOptions?.statsTile !== false && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-[#111111] p-4 rounded-xl text-center">
+                <div className="bg-[#0D0D0D] border border-[#D4AF37]/15 p-4 rounded-xl text-center">
                   <Users className="text-[#D4AF37] mx-auto mb-2" size={24} />
                   <span className="block text-2xl font-bold text-white">{selectedEvent.expectedParticipants}</span>
                   <span className="text-sm text-[#A0A0A0]">Participants</span>
                 </div>
-                <div className="bg-green-50 p-4 rounded-xl text-center">
-                  <Award className="text-green-600 mx-auto mb-2" size={24} />
+                <div className="bg-[#0D0D0D] border border-emerald-500/25 p-4 rounded-xl text-center">
+                  <Award className="text-emerald-400 mx-auto mb-2" size={24} />
                   <span className="block text-2xl font-bold text-white">{selectedEvent.skillZones}</span>
                   <span className="text-sm text-[#A0A0A0]">Skill Zones</span>
                 </div>
-                <div className="bg-[#111111] p-4 rounded-xl text-center">
+                <div className="bg-[#0D0D0D] border border-[#D4AF37]/15 p-4 rounded-xl text-center">
                   <Trophy className="text-[#D4AF37] mx-auto mb-2" size={24} />
                   <span className="block text-2xl font-bold text-white">{selectedEvent.prizes}</span>
                   <span className="text-sm text-[#A0A0A0]">Prize Pool</span>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-xl text-center">
-                  <Calendar className="text-yellow-600 mx-auto mb-2" size={24} />
+                <div className="bg-[#0D0D0D] border border-yellow-500/25 p-4 rounded-xl text-center">
+                  <Calendar className="text-yellow-400 mx-auto mb-2" size={24} />
                   <span className="block text-sm font-bold text-white">Last Date</span>
                   <span className="text-sm text-[#A0A0A0]">{selectedEvent.registrationDeadline}</span>
                 </div>
               </div>
+              )}
 
-              {selectedEvent.highlights.length > 0 && (
+              {selectedEvent.displayOptions?.highlightsTile !== false && selectedEvent.highlights.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold text-white mb-4">Event Highlights</h3>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -433,21 +458,21 @@ const UpcomingEvents = ({ content }) => {
                         <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-green-600 text-sm">✓</span>
                         </div>
-                        <span className="text-gray-700">{item}</span>
+                        <span className="text-[#E5E7EB]">{item}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {selectedEvent.categories.length > 0 && (
+              {selectedEvent.displayOptions?.eligibilityTile !== false && selectedEvent.categories.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold text-white mb-4">Skill Zones and Categories</h3>
                   <div className="flex flex-wrap gap-3">
                     {selectedEvent.categories.map((cat, idx) => (
                       <span
                         key={`${selectedEvent.id}-category-${idx}`}
-                        className="bg-gray-100 text-white px-4 py-2 rounded-full text-sm font-medium"
+                        className="bg-white/10 text-[#E5E7EB] px-4 py-2 rounded-full text-sm font-medium"
                       >
                         {cat}
                       </span>
@@ -456,11 +481,12 @@ const UpcomingEvents = ({ content }) => {
                 </div>
               )}
 
+              {selectedEvent.displayOptions?.passesTile !== false && (
               <div className="mb-8">
                 <h3 className="text-2xl font-bold text-white mb-4">Registration Fees</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {selectedEvent.ticketTypes.map((ticketType) => (
-                    <div key={ticketType.key} className="border border-green-200 rounded-xl p-4 text-center bg-green-50">
+                    <div key={ticketType.key} className="border border-emerald-500/25 rounded-xl p-4 text-center bg-[#0D0D0D]">
                       <span className="text-sm text-[#A0A0A0]">{ticketType.name}</span>
                       <span className="block text-2xl font-bold text-green-600">₹{ticketType.price}</span>
                       <span className="text-xs text-[#A0A0A0]">{ticketType.appliesTo}</span>
@@ -469,30 +495,31 @@ const UpcomingEvents = ({ content }) => {
                 </div>
                 <p className="text-sm text-[#A0A0A0] mt-2">{selectedEvent.refundPolicy}</p>
               </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-6 rounded-xl">
+                <div className="bg-[#0D0D0D] border border-white/10 p-6 rounded-xl">
                   <h4 className="font-bold text-white mb-3 flex items-center gap-2">
                     <MapPin size={18} className="text-[#D4AF37]" />
                     Venue
                   </h4>
-                  <p className="text-gray-700">{selectedEvent.location}</p>
+                  <p className="text-[#A0A0A0]">{selectedEvent.location}</p>
                 </div>
-                <div className="bg-gray-50 p-6 rounded-xl">
+                <div className="bg-[#0D0D0D] border border-white/10 p-6 rounded-xl">
                   <h4 className="font-bold text-white mb-3 flex items-center gap-2">
                     <Award size={18} className="text-[#D4AF37]" />
                     Contact
                   </h4>
-                  <p className="text-gray-700">Email: {selectedEvent.contact.email}</p>
-                  {selectedEvent.contact.phone && <p className="text-gray-700">Phone: {selectedEvent.contact.phone}</p>}
+                  <p className="text-[#A0A0A0]">Email: {selectedEvent.contact.email}</p>
+                  {selectedEvent.contact.phone && <p className="text-[#A0A0A0]">Phone: {selectedEvent.contact.phone}</p>}
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 p-6 flex flex-col sm:flex-row gap-4 justify-end">
+            <div className="border-t border-white/10 p-6 flex flex-col sm:flex-row gap-4 justify-end">
               <button
                 onClick={closeModal}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
+                className="px-6 py-3 border border-white/15 rounded-xl text-white font-semibold hover:bg-white/10"
               >
                 Close
               </button>

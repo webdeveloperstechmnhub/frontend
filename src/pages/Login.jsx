@@ -7,7 +7,6 @@ import GlowButton from '../components/auth/GlowButton'
 import InputField from '../components/auth/InputField'
 import RoleToggle from '../components/auth/RoleToggle'
 import { apiRequest } from '../utils/api'
-import { createDemoStudentSession } from '../utils/session'
 import SessionBadge from '../components/ui/SessionBadge'
 import StateNotice from '../components/ui/StateNotice'
 
@@ -22,7 +21,7 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false)
   const canSubmit = isEmail(form.email) && form.password.length >= 6 && !submitting
   const helperText = role === 'Student'
-    ? 'Students can enter demo mode until a dedicated student auth service is connected.'
+    ? 'Student login is enabled only for admin-approved student accounts.'
     : 'Institute login uses verified admin-created accounts.'
 
   const taglines = useMemo(
@@ -75,8 +74,32 @@ const Login = () => {
           return
         }
 
-        createDemoStudentSession()
-        setStatus({ type: 'success', text: 'Student demo session started. Redirecting to dashboard...' })
+        const result = await apiRequest('/student-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, password: form.password }),
+        })
+
+        if (!result.ok) {
+          setStatus({ type: 'error', text: result.msg || 'Student login failed.' })
+          return
+        }
+
+        const student = result.data?.student || {}
+        localStorage.setItem('studentToken', result.data?.token || '')
+        localStorage.setItem('studentProfile', JSON.stringify({
+          id: student.id,
+          fullName: student.fullName,
+          email: student.email,
+          phone: student.phone,
+          studentId: student.studentId,
+          institute: student.college,
+          year: student.year,
+          city: student.city,
+          interests: student.interests,
+          status: student.status,
+        }))
+        setStatus({ type: 'success', text: 'Student login successful. Redirecting to dashboard...' })
         window.setTimeout(() => navigate('/student/dashboard'), 450)
       } catch (err) {
         console.error(err)
@@ -99,7 +122,7 @@ const Login = () => {
         >
           Back to home
         </button>
-        <SessionBadge label={role === 'Student' ? 'Student demo' : 'Institute live'} tone={role === 'Student' ? 'demo' : 'live'} />
+        <SessionBadge label={role === 'Student' ? 'Student live' : 'Institute live'} tone="live" />
       </div>
 
       <motion.div
@@ -208,7 +231,7 @@ const Login = () => {
             />
 
             <GlowButton type="submit" className="mt-1 w-full" disabled={!canSubmit}>
-              {submitting ? 'Signing in...' : role === 'Student' ? 'Continue as Demo Student' : 'Login'}
+              {submitting ? 'Signing in...' : 'Login'}
             </GlowButton>
 
             {!canSubmit ? (
