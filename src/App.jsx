@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Link, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import Home from './pages/Home'
 import Join from './pages/Join'
@@ -34,9 +34,26 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 const App = () => {
   const location = useLocation()
 
+  const isExternalPage = (pathname) => {
+    if (pathname === '/') return false
+    if (pathname === '/login' || pathname === '/signup') return false
+    if (pathname.startsWith('/student')) return false
+    if (pathname.startsWith('/institute')) return false
+    if (pathname === '/admin' || pathname === '/dashboard' || pathname === '/profile-card') return false
+    return true
+  }
+
   return (
     <MotionConfig reducedMotion="user" transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.7 }}>
     <div className="relative min-h-screen overflow-x-hidden">
+      {isExternalPage(location.pathname) && (
+        <Link
+          to="/"
+          className="fixed left-4 top-4 z-50 inline-flex items-center rounded-full border border-yellow-300/30 bg-black/70 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/30 backdrop-blur-sm transition hover:bg-yellow-400 hover:text-black"
+        >
+          Back to home
+        </Link>
+      )}
       <motion.div
         aria-hidden="true"
         className="tmh-animated-bg"
