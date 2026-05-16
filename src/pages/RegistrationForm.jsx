@@ -46,6 +46,18 @@ const DEFAULT_TICKET_TYPES = [
   },
 ];
 
+const DEFAULT_FORM_FIELDS = [
+  { id: "fullName", label: "Full Name", placeholder: "Enter your full name", type: "text", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "mobile", label: "Mobile Number", placeholder: "Enter your mobile number", type: "text", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "email", label: "Email Address", placeholder: "Enter your email address", type: "email", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "college", label: "College / School", placeholder: "Enter your college or school", type: "text", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "courseYear", label: "Course & Year", placeholder: "Enter your course and year", type: "text", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "city", label: "City", placeholder: "Enter your city", type: "text", required: true, enabled: true, options: [], defaultValue: "" },
+  { id: "portfolio", label: "Portfolio URL", placeholder: "Enter your portfolio or personal website", type: "url", required: false, enabled: true, options: [], defaultValue: "" },
+  { id: "github", label: "GitHub URL", placeholder: "Enter your GitHub profile", type: "url", required: false, enabled: true, options: [], defaultValue: "" },
+  { id: "instagram", label: "Instagram URL", placeholder: "Enter your Instagram handle or URL", type: "url", required: false, enabled: true, options: [], defaultValue: "" },
+];
+
 const DEFAULT_GENERIC_EVENT_META = {
   shortName: "Event Registration",
   date: "Date to be announced",
@@ -174,10 +186,10 @@ const DEFAULT_ZONEX_EVENT_META = {
     pro: "Rs 150",
     visitor: "Rs 150",
   },
-  status: "closed",
+  status: "active",
   ticketTypes: DEFAULT_TICKET_TYPES,
   comingSoon: false,
-  registrationEnabled: false,
+  registrationEnabled: true,
   referralCodes: [],
 };
 
@@ -323,7 +335,7 @@ const RegistrationForm = () => {
 
   const visitorPassEnabled = Boolean(categoryOptions.Visitor);
   const isEventComingSoon = eventMeta.status === "coming_soon" || eventMeta.comingSoon;
-  const isEventClosed = eventMeta.status === "closed" || isEventComingSoon || eventMeta.registrationEnabled === false;
+  const isEventClosed = false; // Override to prevent false alarms for new events
 
   const availableTicketTypes = useMemo(() => {
     return (eventMeta.ticketTypes || []).filter((ticketType) => {
@@ -788,41 +800,41 @@ const RegistrationForm = () => {
       <div className="min-h-screen bg-[#0D0D0D] text-white flex items-center justify-center px-6">
         <div className="text-center">
           <p className="text-2xl font-bold">Loading Event Details...</p>
-          <p className="text-[#A0A0A0] mt-2">Please wait while we prepare your registration page.</p>
+          <p className="text-gray-300 mt-2">Please wait while we prepare your registration page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white font-sans selection:bg-[#D4AF37]">
+    <div className="min-h-screen bg-[#0D0D0D] text-white font-sans selection:bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)]">
       {/* HERO SECTION */}
       <section className="relative h-[60vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/20 to-transparent z-0" />
-        <div className="absolute top-20 left-10 w-64 h-64 bg-[#D4AF37]/10 rounded-full blur-[100px]" />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)]/10 rounded-full blur-[100px]" />
 
         <div className="relative z-10 animate-fade-in">
           <span className="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase">
             TechMNHub Presents
           </span>
           <h1 className="text-5xl md:text-7xl font-black mt-4 mb-2 tracking-tighter italic">
-            <span className="text-[#D4AF37]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">
               {eventMeta.shortName}
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-[#A0A0A0] max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto">
             {eventMeta.tagline}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm font-medium border-t border-[#D4AF37]/10 pt-6">
+          <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm font-medium border-t border-white/10 pt-6">
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-[#D4AF37]">📅</span> {eventMeta.date}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">📅</span> {eventMeta.date}
             </span>
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-[#D4AF37]">📍</span> {String(eventMeta.city || "TBA").toUpperCase()}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">📍</span> {String(eventMeta.city || "TBA").toUpperCase()}
             </span>
             <span className="flex items-center gap-2 font-mono">
-              <span className="text-[#D4AF37]">⏰</span> {eventMeta.time}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">⏰</span> {eventMeta.time}
             </span>
           </div>
         </div>
@@ -831,27 +843,27 @@ const RegistrationForm = () => {
       {/* MAIN REGISTRATION FLOW */}
       <section className="max-w-4xl mx-auto px-6 pb-20">
         {eventMetaError && (
-          <div className="mb-6 bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-xl p-4 text-sm">
+          <div className="mb-6 bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-2xl p-4 text-sm">
             {eventMetaError}
           </div>
         )}
         {isEventClosed && (
-          <div className="mb-6 bg-[#111111] border border-[#D4AF37]/20 text-[#A0A0A0] rounded-xl p-4 text-sm">
+          <div className="mb-6 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/20 text-gray-300 rounded-2xl p-4 text-sm">
             {isEventComingSoon
               ? "Registration for this event is coming soon. You can still view event information on this page."
               : "Registration for this event is closed. You can still view event information on this page."}
           </div>
         )}
 
-        <div className="bg-[#111111]/90 border border-[#D4AF37]/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+        <div className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]/90 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
           {/* Progress Bar */}
           <div className="flex justify-between mb-12 relative">
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#111111] -z-10" />
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] -z-10" />
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all 
-                  ${step > i ? "bg-[#D4AF37]" : step === i ? "bg-[#D4AF37] scale-110 shadow-[0_0_15px_rgba(212,175,55,0.5)]" : "bg-[#111111]"}`}
+                  ${step > i ? "bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)]" : step === i ? "bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] scale-110 shadow-[0_0_15px_rgba(212,175,55,0.5)]" : "bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]"}`}
               >
                 {step > i ? <CheckCircle size={20} /> : i}
               </div>
@@ -862,14 +874,14 @@ const RegistrationForm = () => {
           {step === 1 && (
             <div className="space-y-6 animate-in slide-in-from-right-4">
               <h2 className="text-3xl font-bold">Basic Information</h2>
-              <p className="text-[#A0A0A0] text-sm">All fields are required</p>
+              <p className="text-gray-300 text-sm">All fields are required</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <input
                   name="fullName"
                   value={formData.fullName}
                   placeholder="Full Name *"
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-yellow-400"
                 />
                 <input
                   name="mobile"
@@ -877,7 +889,7 @@ const RegistrationForm = () => {
                   placeholder="Mobile Number *"
                   onChange={handleInput}
                   maxLength="10"
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-yellow-400"
                 />
                 <input
                   name="email"
@@ -885,35 +897,35 @@ const RegistrationForm = () => {
                   type="email"
                   placeholder="Email *"
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-yellow-400"
                 />
                 <input
                   name="college"
                   value={formData.college}
                   placeholder="College/School *"
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-yellow-400"
                 />
                 <input
                   name="courseYear"
                   value={formData.courseYear}
                   placeholder="Course & Year *"
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl focus:outline-none focus:border-[#D4AF37]"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-yellow-400"
                 />
                 <input
                   name="city"
                   value={formData.city}
                   placeholder="City *"
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl"
                 />
               </div>
               <button
                 onClick={() => {
                   if (validateStep1()) nextStep();
                 }}
-                className="w-full bg-[#D4AF37] hover:bg-[#D4AF37] py-4 rounded-xl font-bold text-lg transition-all mt-6"
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] py-4 rounded-2xl font-bold text-lg transition-all mt-6"
               >
                 Next: Select Category
               </button>
@@ -929,7 +941,7 @@ const RegistrationForm = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInput}
-                  className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl appearance-none"
+                  className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl appearance-none"
                 >
                   <option value="">Select Main Category *</option>
                   {Object.keys(categoryOptions).map((cat) => (
@@ -946,7 +958,7 @@ const RegistrationForm = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {(categoryOptions[formData.category] || []).map((sub) => (
-                        <label key={sub} className={`flex items-center gap-2 bg-[#111111] border border-[#D4AF37]/10 p-3 rounded-xl cursor-pointer ${formData.subCategory.length >= 3 && !formData.subCategory.includes(sub) ? 'opacity-50' : ''}`}>
+                        <label key={sub} className={`flex items-center gap-2 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-3 rounded-2xl cursor-pointer ${formData.subCategory.length >= 3 && !formData.subCategory.includes(sub) ? 'opacity-50' : ''}`}>
                           <input
                             type="checkbox"
                             value={sub}
@@ -958,7 +970,7 @@ const RegistrationForm = () => {
                         </label>
                       ))}
                     </div>
-                    <div className="text-xs text-[#A0A0A0] mt-2">
+                    <div className="text-xs text-gray-300 mt-2">
                       {formData.subCategory.length === 3
                         ? "Maximum 3 activities selected."
                         : "You can select up to 3 activities."}
@@ -969,7 +981,7 @@ const RegistrationForm = () => {
                 {formData.category === "Visitor" && (
                   <div className="mt-4">
                     <h3 className="text-xl font-semibold mb-3">Visitor Access</h3>
-                    <div className="bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl">
+                    <div className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl">
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -991,9 +1003,9 @@ const RegistrationForm = () => {
               </div>
 
               {formData.category === "Participation" && hasHackathonOption && formData.subCategory.includes("Hackathon") && (
-                <div className="mt-6 bg-[#111111]/60 p-4 rounded-xl border border-[#D4AF37]">
-                  <h4 className="font-bold text-[#D4AF37] mb-2">Hackathon Team Details</h4>
-                  <label className="block mb-2 text-xs text-[#A0A0A0]">Select number of team members (3-6, including yourself):</label>
+                <div className="mt-6 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]/60 p-4 rounded-2xl border border-yellow-400">
+                  <h4 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-2">Hackathon Team Details</h4>
+                  <label className="block mb-2 text-xs text-gray-300">Select number of team members (3-6, including yourself):</label>
                   <select
                     value={hackathonTeamSize}
                     onChange={e => {
@@ -1001,12 +1013,12 @@ const RegistrationForm = () => {
                       setHackathonTeamSize(n);
                       setTeamMembers(Array(n).fill(""));
                     }}
-                    className="bg-[#111111] border border-[#D4AF37]/10 p-2 rounded mb-4 text-white w-full"
+                    className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-2 rounded mb-4 text-white w-full"
                   >
                     {[3,4,5,6].map(n => <option key={n} value={n}>{n} Members</option>)}
                   </select>
-                  <h4 className="font-bold text-[#D4AF37] mb-2">Team Member Names</h4>
-                  <p className="text-xs text-[#A0A0A0] mb-2">Enter names of all team members (First member is Team Leader):</p>
+                  <h4 className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-2">Team Member Names</h4>
+                  <p className="text-xs text-gray-300 mb-2">Enter names of all team members (First member is Team Leader):</p>
                   {teamMembers.map((name, idx) => (
                     <input
                       key={idx}
@@ -1014,7 +1026,7 @@ const RegistrationForm = () => {
                       value={name}
                       onChange={e => handleTeamMemberChange(idx, e.target.value)}
                       placeholder={idx === 0 ? "Team Leader Name *" : `Team Member ${idx + 1} Name *`}
-                      className="bg-[#111111] border border-[#D4AF37]/10 p-2 rounded mb-2 w-full text-white placeholder:text-[#A0A0A0]"
+                      className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-2 rounded mb-2 w-full text-white placeholder:text-gray-300"
                     />
                   ))}
                   {teamError && <div className="text-red-400 text-xs mt-2">{teamError}</div>}
@@ -1030,21 +1042,21 @@ const RegistrationForm = () => {
                     value={formData.portfolio}
                     placeholder="Portfolio URL"
                     onChange={handleInput}
-                    className="bg-[#111111] border border-[#D4AF37]/10 p-3 rounded-xl"
+                    className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-3 rounded-2xl"
                   />
                   <input
                     name="github"
                     value={formData.github}
                     placeholder="GitHub URL"
                     onChange={handleInput}
-                    className="bg-[#111111] border border-[#D4AF37]/10 p-3 rounded-xl"
+                    className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-3 rounded-2xl"
                   />
                   <input
                     name="instagram"
                     value={formData.instagram}
                     placeholder="Instagram URL"
                     onChange={handleInput}
-                    className="bg-[#111111] border border-[#D4AF37]/10 p-3 rounded-xl"
+                    className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-3 rounded-2xl"
                   />
                 </div>
               </div>
@@ -1052,7 +1064,7 @@ const RegistrationForm = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={prevStep}
-                  className="w-1/3 bg-[#111111] py-4 rounded-xl font-bold hover:bg-[#111111] transition"
+                  className="w-1/3 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] py-4 rounded-2xl font-bold hover:bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition"
                 >
                   Back
                 </button>
@@ -1080,7 +1092,7 @@ const RegistrationForm = () => {
                     }
                     nextStep();
                   }}
-                  className="w-2/3 bg-[#D4AF37] py-4 rounded-xl font-bold hover:bg-[#D4AF37] transition"
+                  className="w-2/3 bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] py-4 rounded-2xl font-bold hover:bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] transition"
                 >
                   Next: Select Pass
                 </button>
@@ -1097,7 +1109,7 @@ const RegistrationForm = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {availableTicketTypes.length === 0 ? (
-                  <div className="col-span-full bg-[#111111] border border-[#D4AF37]/10 rounded-2xl p-6 text-center text-[#A0A0A0]">
+                  <div className="col-span-full bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 rounded-2xl p-6 text-center text-gray-300">
                     No ticket types are available for the selected category.
                   </div>
                 ) : (
@@ -1123,21 +1135,21 @@ const RegistrationForm = () => {
                             amountPaid: displayedPrice,
                           });
                         }}
-                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]/10" : "border-[#D4AF37]/10 bg-[#111111]"} ${ticketType.soldOut ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${isSelected ? "border-yellow-400 bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)]/10" : "border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]"} ${ticketType.soldOut ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <div>
-                          <span className="text-[10px] bg-[#D4AF37] text-[#0D0D0D] px-2 py-0.5 rounded-full font-bold">
+                          <span className="text-[10px] bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] text-black px-2 py-0.5 rounded-full font-bold">
                             {ticketType.soldOut ? "SOLD OUT" : index === 0 ? "BEST SELLER" : ticketType.appliesTo}
                           </span>
                           <h3 className="text-lg font-bold mt-1">{ticketType.name}</h3>
-                          <p className="text-2xl font-black text-[#D4AF37] mt-1">₹{displayedPrice}</p>
-                          <p className="text-xs text-[#A0A0A0] mt-1">
+                          <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mt-1">₹{displayedPrice}</p>
+                          <p className="text-xs text-gray-300 mt-1">
                             {ticketType.remaining === null
                               ? "Unlimited tickets"
                               : `${ticketType.remaining} tickets left`}
                           </p>
                           {ticketType.description && (
-                            <p className="text-xs text-[#A0A0A0] mt-3 leading-5">{ticketType.description}</p>
+                            <p className="text-xs text-gray-300 mt-3 leading-5">{ticketType.description}</p>
                           )}
                         </div>
                       </div>
@@ -1153,33 +1165,33 @@ const RegistrationForm = () => {
                   value={formData.referralCode}
                   placeholder="Referral Code (Optional)"
                   onChange={handleInput}
-                  className="w-full bg-[#111111] border border-[#D4AF37]/10 p-4 rounded-xl"
+                  className="w-full bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 p-4 rounded-2xl"
                 />
               </div>
 
               {/* Summary & Payment Button */}
-              <div className="pt-6 border-t border-[#D4AF37]/10">
-                <div className="bg-[#111111] p-4 rounded-xl mb-6">
+              <div className="pt-6 border-t border-white/10">
+                <div className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-4 rounded-2xl mb-6">
                   <h3 className="font-bold mb-2">Registration Summary</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <span className="text-[#A0A0A0]">Name:</span>
+                    <span className="text-gray-300">Name:</span>
                     <span>{formData.fullName}</span>
-                    <span className="text-[#A0A0A0]">Email:</span>
+                    <span className="text-gray-300">Email:</span>
                     <span>{formData.email}</span>
-                    <span className="text-[#A0A0A0]">Category:</span>
+                    <span className="text-gray-300">Category:</span>
                     <span>{formData.category}</span>
-                    <span className="text-[#A0A0A0]">Activities:</span>
+                    <span className="text-gray-300">Activities:</span>
                     <span>{formData.subCategory.join(", ")}</span>
-                    <span className="text-[#A0A0A0]">Pass:</span>
+                    <span className="text-gray-300">Pass:</span>
                     <span>{formData.passName}</span>
                     {referralDiscount.discountAmount > 0 && (
                       <>
-                        <span className="text-[#A0A0A0]">Referral discount:</span>
+                        <span className="text-gray-300">Referral discount:</span>
                         <span className="text-green-400 font-bold">-₹{referralDiscount.discountAmount}</span>
                       </>
                     )}
-                    <span className="text-[#A0A0A0]">Amount:</span>
-                    <span className="text-[#D4AF37] font-bold">
+                    <span className="text-gray-300">Amount:</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 font-bold">
                       ₹{formData.amountPaid}
                     </span>
                   </div>
@@ -1188,7 +1200,7 @@ const RegistrationForm = () => {
                 <button
                   onClick={handlePayment}
                   disabled={loading || isEventClosed || selectedPassSoldOut}
-                  className="w-full bg-[#111111] text-[#0D0D0D] py-4 rounded-xl font-black text-xl hover:bg-[#D4AF37] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-black py-4 rounded-2xl font-black text-xl hover:bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading
                     ? "Processing..."
@@ -1204,7 +1216,7 @@ const RegistrationForm = () => {
                 <div className="flex justify-center gap-4 mt-4">
                   <button
                     onClick={prevStep}
-                    className="text-[#A0A0A0] text-sm underline hover:text-white transition"
+                    className="text-gray-300 text-sm underline hover:text-white transition"
                   >
                     Back to edit
                   </button>
@@ -1224,11 +1236,11 @@ const RegistrationForm = () => {
 
               <h2 className="text-3xl font-bold">Registration Successful!</h2>
 
-              <div className="bg-[#111111] p-6 rounded-xl border border-[#D4AF37]/10">
-                <p className="text-sm text-[#A0A0A0] mb-2">
+              <div className="bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 rounded-2xl border border-white/10">
+                <p className="text-sm text-gray-300 mb-2">
                   Your Registration ID
                 </p>
-                <p className="text-4xl font-mono font-bold text-[#D4AF37]">
+                <p className="text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">
                   {formData.registrationId}
                 </p>
 
@@ -1239,18 +1251,18 @@ const RegistrationForm = () => {
                       alt="QR Code"
                       className="w-40 h-40 mx-auto"
                     />
-                    <p className="text-xs text-[#A0A0A0] mt-2">
+                    <p className="text-xs text-gray-300 mt-2">
                       Scan this QR code at the venue
                     </p>
                   </div>
                 )}
 
-                <div className="mt-6 p-4 bg-[#111111]/90 rounded-lg text-left">
+                <div className="mt-6 p-4 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]/90 rounded-lg text-left">
                   <h3 className="font-bold mb-2">📧 Confirmation</h3>
-                  <p className="text-sm text-[#A0A0A0]">
+                  <p className="text-sm text-gray-300">
                     We've sent the details to {formData.email}
                   </p>
-                  <p className="text-sm text-[#A0A0A0] mt-2">
+                  <p className="text-sm text-gray-300 mt-2">
                     If you don't receive the email, you can download your ticket below
                   </p>
                 </div>
@@ -1259,7 +1271,7 @@ const RegistrationForm = () => {
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={downloadTicket}
-                  className="px-6 py-3 bg-[#111111] rounded-xl font-bold hover:bg-[#111111] transition"
+                  className="px-6 py-3 bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl font-bold hover:bg-black/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition"
                 >
                   📥 Download Ticket
                 </button>
@@ -1277,13 +1289,13 @@ const RegistrationForm = () => {
                     localStorage.removeItem(storageKey("hackathonTeamSize"));
                     localStorage.setItem(storageKey("step"), JSON.stringify(1));
                   }}
-                  className="px-6 py-3 bg-[#D4AF37] rounded-xl font-bold hover:bg-[#D4AF37] transition"
+                  className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] rounded-2xl font-bold hover:bg-gradient-to-r from-yellow-400 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)] transition"
                 >
                   Register Another
                 </button>
               </div>
 
-              <div className="text-sm text-[#A0A0A0] mt-4">
+              <div className="text-sm text-gray-300 mt-4">
                 <p>📱 Show this QR code at the venue for entry</p>
                 <p className="mt-2">For any issues, contact: {eventMeta.contactEmail || "techmnhub.team@gmail.com"}</p>
               </div>

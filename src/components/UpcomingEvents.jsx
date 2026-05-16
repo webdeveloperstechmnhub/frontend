@@ -70,6 +70,71 @@ const legacyEvent = {
   ],
 };
 
+const summerCampEvent = {
+  id: "summer-camp-2026",
+  name: "TechMNHub Future Skills Summer Camp 2026",
+  shortName: "Future Skills Camp",
+  date: "1 June, 2026",
+  day: "Saturday",
+  time: "09:00 AM - 02:00 PM",
+  location: "TechMNHub Campus, Delhi NCR",
+  venue: "TechMNHub Campus",
+  city: "Delhi NCR",
+  organizer: "TechMNHub",
+  expectedParticipants: "200+",
+  skillZones: "5+",
+  prizes: "Certificates & Rewards",
+  description:
+    "A premium summer camp for students in Class 6th-12th to learn AI, coding, public speaking and future-ready skills through live projects and mentor-led sessions.",
+  highlights: [
+    "Live AI and coding labs",
+    "Team challenges and games",
+    "Confidence building sessions",
+    "Certificate on completion",
+  ],
+  categories: ["Summer Camp", "AI", "Coding", "Public Speaking", "Creativity"],
+  entryFee: {
+    pro: "Rs 399",
+    visitor: "Rs 399",
+  },
+  contact: {
+    email: "support@techmnhub.com",
+    phone: "+91 98765 43210",
+  },
+  registrationDeadline: "25 May, 2026",
+  refundPolicy: "Full refund available until camp start date.",
+  tags: ["Summer Camp", "AI", "Creative Learning", "Future Skills"],
+  registrationLink: "/summer-camp-registration",
+  status: "active",
+  ticketTypes: [
+    {
+      key: "basic-pass",
+      name: "Basic Pass",
+      price: 399,
+      total: 0,
+      appliesTo: "Summer Camp",
+      description: "Core camp access with guided sessions.",
+    },
+    {
+      key: "smart-pass",
+      name: "Smart Pass",
+      price: 599,
+      total: 0,
+      appliesTo: "Summer Camp",
+      description: "Includes extra project coaching and activities.",
+    },
+    {
+      key: "premium-pass",
+      name: "Premium Pass",
+      price: 999,
+      total: 0,
+      appliesTo: "Summer Camp",
+      description: "Full premium experience with mentor clinics.",
+    },
+  ],
+  eventType: 'summer_camp',
+};
+
 const normalizeTicketTypes = (event) => {
   if (Array.isArray(event.ticketTypes) && event.ticketTypes.length > 0) {
     return event.ticketTypes.map((ticketType, index) => ({
@@ -273,11 +338,22 @@ const UpcomingEvents = ({ content }) => {
       ? content.events.map(normalizeEvent)
       : [];
 
-  const displayedEvents = events.length > 0
-    ? events
-    : fallbackContentEvents.length > 0
-      ? fallbackContentEvents
-      : [legacyEvent];
+  const summerCampFallback = normalizeEvent(summerCampEvent);
+  const appendSummerCampIfMissing = (eventList) => {
+    const hasSummerCamp = eventList.some(
+      (event) => event.eventType === "summer_camp" || event.id === summerCampFallback.id,
+    );
+    if (hasSummerCamp) return eventList;
+    return [summerCampFallback, ...eventList];
+  };
+
+  const displayedEvents = appendSummerCampIfMissing(
+    events.length > 0
+      ? events
+      : fallbackContentEvents.length > 0
+        ? fallbackContentEvents
+        : [legacyEvent],
+  );
 
   return (
     <>
@@ -304,9 +380,12 @@ const UpcomingEvents = ({ content }) => {
                     className="bg-[#111111] rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-[#D4AF37]/20"
                 >
                   <div className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] p-6 text-white">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-wrap justify-between items-start gap-3">
                       <span className="bg-[#111111] backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
                         {event.day}
+                      </span>
+                      <span className="bg-[#272727] text-yellow-300 px-3 py-1 rounded-full text-xs font-semibold">
+                        {event.eventType === 'summer_camp' ? 'Summer Camp' : event.eventType ? event.eventType.replace('_', ' ') : 'Event'}
                       </span>
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
                         {event.comingSoon || event.status === "coming_soon"

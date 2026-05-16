@@ -8,6 +8,9 @@ import TechStars from './pages/TechStars'
 import TechFront from './pages/TechFront'
 import BookSession from './pages/BookSession'
 import RegistrationForm from './pages/RegistrationForm'
+import SummerCampRegistrationForm from './pages/SummerCampRegistrationForm'
+import EventRegistrationRoute from './pages/EventRegistrationRoute'
+import SummerCampSuccess from './pages/SummerCampSuccess'
 import ZonexRegistration from './pages/RegistrationForm'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfUse from './pages/TermsOfUse'
@@ -93,7 +96,9 @@ const App = () => {
               <Route path='/techfront' element={<TechFront />} />
               <Route path='/book-session' element={<BookSession />} />
               <Route path='/registration-form' element={<RegistrationForm />} />
-              <Route path='/registration-form/:eventId' element={<RegistrationForm />} />
+              <Route path='/summer-camp-registration' element={<SummerCampRegistrationForm />} />
+              <Route path='/summer-camp-success' element={<SummerCampSuccess />} />
+              <Route path='/registration-form/:eventId' element={<EventRegistrationRoute />} />
               <Route path='/zonex-registration' element={<ZonexRegistration />} />
               <Route path='/privacy-policy' element={<PrivacyPolicy />} />
               <Route path='/terms-of-use' element={<TermsOfUse />} />
